@@ -5,6 +5,8 @@ VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetworkingWin", "NetworkingWin\NetworkingWin.vcxproj", "{784B0FA3-3656-4962-BFBD-732F47BDB2B2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GioNet", "GioNet\GioNet.vcxproj", "{96030668-0EA8-4048-AFFB-0FF9D61E72CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +23,14 @@ Global
 		{784B0FA3-3656-4962-BFBD-732F47BDB2B2}.Release|Win32.Build.0 = Release|Win32
 		{784B0FA3-3656-4962-BFBD-732F47BDB2B2}.Release|x64.ActiveCfg = Release|x64
 		{784B0FA3-3656-4962-BFBD-732F47BDB2B2}.Release|x64.Build.0 = Release|x64
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Debug|Win32.Build.0 = Debug|Win32
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Debug|x64.ActiveCfg = Debug|x64
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Debug|x64.Build.0 = Debug|x64
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Release|Win32.ActiveCfg = Release|Win32
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Release|Win32.Build.0 = Release|Win32
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Release|x64.ActiveCfg = Release|x64
+		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
