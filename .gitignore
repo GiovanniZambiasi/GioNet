@@ -1,0 +1,10 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+.idea/
+/x64
+/Networking/x64
+
+**/*.vcxproj.filters
