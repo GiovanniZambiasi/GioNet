@@ -11,7 +11,7 @@ GioNet::NetSystem& GioNet::NetSystem::Get()
 {
     if(!instance)
     {
-        instance = std::make_unique<NetSystem>(*new NetSystem{});
+        instance = std::unique_ptr<NetSystem>{new NetSystem{}};
     }
 
     assert(instance);
