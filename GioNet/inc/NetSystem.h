@@ -8,7 +8,7 @@ namespace GioNet
 
 namespace GioNet
 {
-    struct SocketConfig;
+    struct SocketCreationParams;
     class Socket;
     
     class NetSystem
@@ -33,7 +33,7 @@ namespace GioNet
         std::shared_ptr<Socket> OpenClientSocket(const char* ip, const char* port = nullptr);
 
     private:
-        std::shared_ptr<Socket> OpenSocket(const SocketConfig& config);
+        std::shared_ptr<Socket> OpenSocket(const SocketCreationParams& config);
     };    
 }
 

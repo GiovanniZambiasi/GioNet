@@ -61,7 +61,7 @@ std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenClientSocket(const char* 
     return OpenSocket({ip, port, hints});
 }
 
-std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenSocket(const SocketConfig& config)
+std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenSocket(const SocketCreationParams& config)
 {
     addrinfo* result{nullptr};
     int errorCode = getaddrinfo(config.ip, config.port ? config.port : GIONET_DEFAULT_PORT, &config.winSettings, &result);

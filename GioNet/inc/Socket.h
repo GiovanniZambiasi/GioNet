@@ -3,7 +3,7 @@
 
 namespace GioNet
 {
-    struct SocketConfig
+    struct SocketCreationParams
     {
         const char* ip{nullptr};
         
@@ -33,5 +33,10 @@ namespace GioNet
         {
             return windowsSocket != INVALID_SOCKET;
         }
+
+        bool Bind();
+
+    private:
+        void FreeAddressInfo();
     };
 }
