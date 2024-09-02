@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <cstdio>
 
+#include "Client.h"
 #include "Server.h"
 #include "Socket.h"
 
@@ -45,6 +46,14 @@ GioNet::Server GioNet::NetSystem::StartServer(const char* port)
     std::shared_ptr<Socket> socket = OpenServerSocket(port);
     s.BindSocket(socket);
     return s;
+}
+
+GioNet::Client GioNet::NetSystem::StartClient(const char* ip, const char* port)
+{
+    Client c{};
+    std::shared_ptr<Socket> socket = OpenClientSocket(ip, port);
+    c.Connect(socket);
+    return c;
 }
 
 std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenServerSocket(const char* port)

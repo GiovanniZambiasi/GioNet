@@ -16,8 +16,7 @@ int main(int argC, char* argV[])
     else if(netMode == "client")
     {
         auto& sys = GioNet::NetSystem::Get();
-        std::shared_ptr<GioNet::Socket> socket = sys.OpenClientSocket("localhost");
-        socket->Connect();
+        GioNet::Client client = sys.StartClient("localhost");
     }
     else
     {

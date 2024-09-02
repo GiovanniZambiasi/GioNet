@@ -1,7 +1,5 @@
 ﻿#include "Server.h"
-
 #include <assert.h>
-
 #include "Socket.h"
 
 void GioNet::Server::BindSocket(std::shared_ptr<Socket> socket)

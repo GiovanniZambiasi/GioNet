@@ -4,17 +4,10 @@
 
 namespace GioNet
 {
-    class Server;
-}
-
-namespace GioNet
-{
-}
-
-namespace GioNet
-{
     struct SocketCreationParams;
     class Socket;
+    class Server;
+    class Client;
     
     class NetSystem
     {
@@ -34,6 +27,8 @@ namespace GioNet
         static void Reset() { instance.reset(); }
 
         Server StartServer(const char* port = nullptr);
+
+        Client StartClient(const char* ip, const char* port = nullptr);
 
         std::shared_ptr<Socket> OpenServerSocket(const char* port = nullptr);
 
