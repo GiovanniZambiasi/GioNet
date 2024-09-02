@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <cstdio>
 
+#include "Server.h"
 #include "Socket.h"
 
 std::unique_ptr<GioNet::NetSystem> GioNet::NetSystem::instance{};
@@ -36,6 +37,14 @@ GioNet::NetSystem::~NetSystem()
     {
         printf("[ERROR]: Winsock initialization with result %ld\n", WSAGetLastError());
     }
+}
+
+GioNet::Server GioNet::NetSystem::StartServer(const char* port)
+{
+    Server s{};
+    std::shared_ptr<Socket> socket = OpenServerSocket(port);
+    s.BindSocket(socket);
+    return s;
 }
 
 std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenServerSocket(const char* port)

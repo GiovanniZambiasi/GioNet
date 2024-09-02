@@ -2,3 +2,4 @@
 #include "Core.h"
 #include "NetSystem.h"
 #include "Socket.h"
+#include "Server.h"

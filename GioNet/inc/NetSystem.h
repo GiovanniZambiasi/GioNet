@@ -4,6 +4,11 @@
 
 namespace GioNet
 {
+    class Server;
+}
+
+namespace GioNet
+{
 }
 
 namespace GioNet
@@ -27,6 +32,8 @@ namespace GioNet
         GIONET_NOCOPY_NOMOVE(NetSystem)
         
         static void Reset() { instance.reset(); }
+
+        Server StartServer(const char* port = nullptr);
 
         std::shared_ptr<Socket> OpenServerSocket(const char* port = nullptr);
 

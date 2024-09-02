@@ -34,7 +34,15 @@ namespace GioNet
             return windowsSocket != INVALID_SOCKET;
         }
 
+        // SERVER
         bool Bind();
+
+        bool Listen();
+
+        SOCKET Accept();
+
+        //CLIENT
+        bool Connect();
 
     private:
         void FreeAddressInfo();
