@@ -32,6 +32,14 @@ void GioNet::Client::Connect()
     }
 }
 
+void GioNet::Client::Disconnect()
+{
+    if(socket->IsValid())
+    {
+        socket->Close();
+    }
+}
+
 void GioNet::Client::ReceiveLoop()
 {
     int received;
@@ -39,7 +47,16 @@ void GioNet::Client::ReceiveLoop()
     {
         char buffer[GIONET_DEFAULT_BUFFER];
         received = socket->Receive(&buffer[0], sizeof(buffer));
-        printf("Received data from server: '%s'\n", &buffer[0]);
+        if(received > 0)
+        {
+            printf("Received data from server: '%s'\n", &buffer[0]);
+        }
+        else if(!socket->IsValid())
+        {
+            break;
+        }
     }
     while (received != SOCKET_ERROR);
+
+    printf("Ending receive loop because connection was lost\n");
 }

@@ -10,8 +10,15 @@ GioNet::Socket::Socket(SOCKET socket, addrinfo* addrInfo)
 
 GioNet::Socket::~Socket()
 {
-    FreeAddressInfo();
-    windowsSocket = INVALID_SOCKET;
+    if(windowsSocket != INVALID_SOCKET)
+    {
+        Close();
+    }
+}
+
+bool GioNet::Socket::IsValid() const
+{
+    return windowsSocket != INVALID_SOCKET;
 }
 
 int GioNet::Socket::Send(const char* buffer, int len)
@@ -57,8 +64,7 @@ bool GioNet::Socket::Bind()
     if (errorCode == SOCKET_ERROR)
     {
         WINSOCK_REPORT_ERROR();
-        FreeAddressInfo();
-        closesocket(windowsSocket);
+        Close();
         return false;
     }
     
@@ -72,7 +78,7 @@ bool GioNet::Socket::Listen()
 {
     if ( listen( windowsSocket, SOMAXCONN ) == SOCKET_ERROR ) {
         WINSOCK_REPORT_ERROR();
-        closesocket(windowsSocket);
+        Close();
         return false;
     }
 
@@ -89,7 +95,6 @@ GioNet::Peer GioNet::Socket::Accept()
     if (ClientSocket == INVALID_SOCKET)
     {
         WINSOCK_REPORT_ERROR();
-        closesocket(windowsSocket);
         return {};
     }
 
@@ -105,8 +110,7 @@ bool GioNet::Socket::Connect()
     if (result == SOCKET_ERROR)
     {
         WINSOCK_REPORT_ERROR();
-        closesocket(windowsSocket);
-        windowsSocket = INVALID_SOCKET;
+        return false;
     }
 
     FreeAddressInfo();
@@ -116,6 +120,17 @@ bool GioNet::Socket::Connect()
     }
 
     return true;
+}
+
+void GioNet::Socket::Close()
+{
+    FreeAddressInfo();
+
+    if(windowsSocket != INVALID_SOCKET)
+    {
+        closesocket(windowsSocket);
+        windowsSocket = INVALID_SOCKET;
+    }
 }
 
 void GioNet::Socket::FreeAddressInfo()

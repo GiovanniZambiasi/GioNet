@@ -23,6 +23,8 @@ namespace GioNet
         
         void Connect();
 
+        void Disconnect();
+
     private:
         void ReceiveLoop();
         

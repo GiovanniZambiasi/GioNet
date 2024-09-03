@@ -22,10 +22,7 @@ namespace GioNet
         Socket(Socket&& other) = default;
         Socket& operator=(Socket&& other) = default;
 
-        bool IsValid() const
-        {
-            return windowsSocket != INVALID_SOCKET;
-        }
+        bool IsValid() const;
 
         int Send(const char* buffer, int len);
 
@@ -45,6 +42,8 @@ namespace GioNet
         //CLIENT
         bool Connect();
 
+        void Close();
+        
     private:
         void FreeAddressInfo();
     };

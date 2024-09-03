@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include <memory>
+#include <shared_mutex>
 #include <thread>
-#include <vector>
+#include <unordered_map>
 #include "Peer.h"
 
 namespace GioNet
@@ -13,9 +14,11 @@ namespace GioNet
     {
         std::shared_ptr<Socket> listenSocket{};
 
-        std::vector<Peer> connectedPeers{};
+        std::unordered_map<Peer, std::thread> connectionThreads{};
 
-        std::vector<std::thread> threads{};
+        std::thread listenThread{};
+        
+        std::shared_mutex connectionMutex{};
 
     public:
         Server() = default;
@@ -29,7 +32,9 @@ namespace GioNet
         void SendToPeer(const Peer& peer, const char* buffer, int len);
 
     private:
-        void AddConnectedPeer(const Peer& peer);
+        void AddPeer(const Peer& peer);
+
+        void RemovePeer(const Peer& peer);
 
         void ConnectionLoop();
 
