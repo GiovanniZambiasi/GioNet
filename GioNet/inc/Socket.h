@@ -3,15 +3,6 @@
 
 namespace GioNet
 {
-    struct SocketCreationParams
-    {
-        const char* ip{nullptr};
-        
-        const char* port{nullptr};
-        
-        addrinfo winSettings{};
-    };
-    
     class Socket
     {
         SOCKET windowsSocket{INVALID_SOCKET};

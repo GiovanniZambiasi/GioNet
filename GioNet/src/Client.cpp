@@ -3,8 +3,7 @@
 #include <assert.h>
 #include "Socket.h"
 
-bool GioNet::Client::Connect(std::shared_ptr<Socket> connectionSocket)
+GioNet::Client::Client(const std::shared_ptr<Socket>& socket)
+    : socket(socket)
 {
-    assert(connectionSocket && connectionSocket->IsValid());
-    return connectionSocket->Connect();
 }

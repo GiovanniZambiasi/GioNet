@@ -1,12 +1,12 @@
 ﻿#include "Server.h"
 #include <assert.h>
+#include <string>
+
 #include "Socket.h"
 
-void GioNet::Server::BindSocket(std::shared_ptr<Socket> socket)
+GioNet::Server::Server(const std::shared_ptr<Socket>& listenSocket)
+    : listenSocket(listenSocket)
 {
-    assert(socket->IsValid());
-    listenSocket = socket;
-    listenSocket->Bind();
 }
 
 void GioNet::Server::Listen()

@@ -10,6 +10,9 @@ namespace GioNet
         std::shared_ptr<Socket> socket{};
         
     public:
-        bool Connect(std::shared_ptr<Socket> connectionSocket);
+        Client() = default;
+
+        Client(const std::shared_ptr<Socket>& socket);
+        
     };    
 }

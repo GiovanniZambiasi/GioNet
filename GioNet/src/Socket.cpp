@@ -49,7 +49,10 @@ bool GioNet::Socket::Listen()
 
 SOCKET GioNet::Socket::Accept()
 {
-    SOCKET ClientSocket = accept(windowsSocket, NULL, NULL);
+    sockaddr_in addr{};
+    ZeroMemory(&addr, sizeof(sockaddr_in));
+    int size = sizeof(addr);
+    SOCKET ClientSocket = accept(windowsSocket,reinterpret_cast<sockaddr*>(&addr), &size);
     
     if (ClientSocket == INVALID_SOCKET)
     {

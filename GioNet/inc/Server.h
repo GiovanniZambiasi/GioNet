@@ -10,7 +10,9 @@ namespace GioNet
         std::shared_ptr<Socket> listenSocket{};
         
     public:
-        void BindSocket(std::shared_ptr<Socket> socket);
+        Server() = default;
+        
+        Server(const std::shared_ptr<Socket>& listenSocket);
         
         void Listen();
     

@@ -4,7 +4,7 @@
 
 namespace GioNet
 {
-    struct SocketCreationParams;
+    struct SocketParams;
     class Socket;
     class Server;
     class Client;
@@ -30,12 +30,12 @@ namespace GioNet
 
         Client StartClient(const char* ip, const char* port = nullptr);
 
-        std::shared_ptr<Socket> OpenServerSocket(const char* port = nullptr);
+        std::shared_ptr<Socket> CreateAndBindServerSocket(const char* port = nullptr);
 
-        std::shared_ptr<Socket> OpenClientSocket(const char* ip, const char* port = nullptr);
+        std::shared_ptr<Socket> CreateClientSocketAndConnect(const char* ip, const char* port = nullptr);
 
     private:
-        std::shared_ptr<Socket> OpenSocket(const SocketCreationParams& config);
+        std::shared_ptr<Socket> CreateSocket(const char* ip, const char* port, const addrinfo& config);
     };    
 }
 
