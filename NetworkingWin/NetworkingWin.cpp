@@ -18,6 +18,10 @@ int main(int argC, char* argV[])
         auto& sys = GioNet::NetSystem::Get();
         GioNet::Server server = sys.StartServer();
         server.Listen();
+        while (true)
+        {
+            
+        }
     }
     else if(netMode == "client")
     {
@@ -30,6 +34,10 @@ int main(int argC, char* argV[])
         
         auto& sys = GioNet::NetSystem::Get();
         GioNet::Client client = sys.StartClient(serverIpLoc->second.c_str());
+        while (true)
+        {
+            
+        }
     }
     else
     {

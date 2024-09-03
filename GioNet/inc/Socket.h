@@ -3,6 +3,8 @@
 
 namespace GioNet
 {
+    struct Peer;
+    
     class Socket
     {
         SOCKET windowsSocket{INVALID_SOCKET};
@@ -30,7 +32,7 @@ namespace GioNet
 
         bool Listen();
 
-        SOCKET Accept();
+        Peer Accept();
 
         //CLIENT
         bool Connect();

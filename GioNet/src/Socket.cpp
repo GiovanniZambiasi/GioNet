@@ -1,6 +1,7 @@
 ﻿#include "Socket.h"
-
 #include <cstdio>
+
+#include "Peer.h"
 
 GioNet::Socket::Socket(SOCKET socket, addrinfo* addrInfo)
     : windowsSocket(socket), addressInfo(addrInfo)
@@ -10,12 +11,7 @@ GioNet::Socket::Socket(SOCKET socket, addrinfo* addrInfo)
 GioNet::Socket::~Socket()
 {
     FreeAddressInfo();
-
-    if(windowsSocket != INVALID_SOCKET)
-    {
-        
-        windowsSocket = INVALID_SOCKET;
-    }
+    windowsSocket = INVALID_SOCKET;
 }
 
 bool GioNet::Socket::Bind()
@@ -24,7 +20,7 @@ bool GioNet::Socket::Bind()
 
     if (errorCode == SOCKET_ERROR)
     {
-        printf("bind failed with error: %d\n", WSAGetLastError());
+        WINSOCK_REPORT_ERROR();
         FreeAddressInfo();
         closesocket(windowsSocket);
         return false;
@@ -39,7 +35,7 @@ bool GioNet::Socket::Bind()
 bool GioNet::Socket::Listen()
 {
     if ( listen( windowsSocket, SOMAXCONN ) == SOCKET_ERROR ) {
-        printf( "Listen failed with error: %ld\n", WSAGetLastError() );
+        WINSOCK_REPORT_ERROR();
         closesocket(windowsSocket);
         return false;
     }
@@ -47,7 +43,7 @@ bool GioNet::Socket::Listen()
     return true;
 }
 
-SOCKET GioNet::Socket::Accept()
+GioNet::Peer GioNet::Socket::Accept()
 {
     sockaddr_in addr{};
     ZeroMemory(&addr, sizeof(sockaddr_in));
@@ -56,11 +52,15 @@ SOCKET GioNet::Socket::Accept()
     
     if (ClientSocket == INVALID_SOCKET)
     {
-        printf("accept failed: %d\n", WSAGetLastError());
+        WINSOCK_REPORT_ERROR();
         closesocket(windowsSocket);
+        return {};
     }
 
-    return ClientSocket;
+    char buff[16];
+    inet_ntop(addr.sin_family, addr.sin_zero, &buff[0], sizeof(buff));
+
+    return {ClientSocket, {buff}, addr.sin_port};
 }
 
 bool GioNet::Socket::Connect()
