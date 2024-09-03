@@ -1,8 +1,6 @@
 #include "NetSystem.h"
-
 #include <assert.h>
 #include <cstdio>
-
 #include "Client.h"
 #include "Server.h"
 #include "Socket.h"
@@ -32,12 +30,7 @@ GioNet::NetSystem::NetSystem()
 
 GioNet::NetSystem::~NetSystem()
 {
-    int result = WSACleanup();
-
-    if(result != 0)
-    {
-        printf("[ERROR]: Winsock initialization with result %ld\n", WSAGetLastError());
-    }
+    WINSOCK_CALL_AND_REPORT(WSACleanup())
 }
 
 GioNet::Server GioNet::NetSystem::StartServer(const char* port)
@@ -82,11 +75,10 @@ std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenClientSocket(const char* 
 std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenSocket(const SocketCreationParams& config)
 {
     addrinfo* result{nullptr};
-    int errorCode = getaddrinfo(config.ip, config.port ? config.port : GIONET_DEFAULT_PORT, &config.winSettings, &result);
-
-    if(errorCode != 0)
+    WINSOCK_CALL_AND_REPORT(getaddrinfo(config.ip, config.port ? config.port : GIONET_DEFAULT_PORT, &config.winSettings, &result))
+   
+    if(!success)
     {
-        printf("[ERROR]: Starting socket failed with error code %i\n", errorCode);
         return {};
     }
 
@@ -97,7 +89,7 @@ std::shared_ptr<GioNet::Socket> GioNet::NetSystem::OpenSocket(const SocketCreati
 
     if(!s->IsValid())
     {
-        printf("[ERROR]: Starting socket failed with error code %ld\n", WSAGetLastError());
+        WINSOCK_REPORT_ERROR();
         return {};
     }
 

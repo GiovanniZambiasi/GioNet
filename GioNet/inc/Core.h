@@ -20,3 +20,11 @@
 #define GIONET_NOCOPY_NOMOVE(ClassName)\
     GIONET_NOCOPY(ClassName)\
     GIONET_NOMOVE(ClassName)
+
+#define WINSOCK_REPORT_ERROR() printf("[ERROR][Winsock]: Call failed with code %ld. ('%s':%i)\n", WSAGetLastError(), __FILE__, __LINE__)
+
+#define WINSOCK_CALL_AND_REPORT(Call)\
+    bool success = Call == 0;\
+    if(!success)\
+    { WINSOCK_REPORT_ERROR(); }\
+    
