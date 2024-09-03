@@ -10,7 +10,7 @@ GioNet::Client::Client(const std::shared_ptr<Socket>& socket)
 
 GioNet::Client::~Client()
 {
-    listenThread.detach();
+    Disconnect();
 }
 
 void GioNet::Client::SayHello()
@@ -38,6 +38,8 @@ void GioNet::Client::Disconnect()
     {
         socket->Close();
     }
+
+    listenThread.detach();
 }
 
 void GioNet::Client::ReceiveLoop()
