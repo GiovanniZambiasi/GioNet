@@ -16,7 +16,12 @@ GioNet::Socket::~Socket()
 
 int GioNet::Socket::Send(const char* buffer, int len)
 {
-    int res = send(windowsSocket, buffer, len, 0);
+    return SendTo(windowsSocket, buffer, len);
+}
+
+int GioNet::Socket::SendTo(SOCKET socket, const char* buffer, int len)
+{
+    int res = send(socket, buffer, len, 0);
 
     if(res == SOCKET_ERROR)
     {
@@ -57,7 +62,7 @@ bool GioNet::Socket::Bind()
         return false;
     }
     
-    // addrinfo no longer needed 
+    // addrinfo no longer needed
     FreeAddressInfo();
 
     return true;
@@ -96,26 +101,20 @@ GioNet::Peer GioNet::Socket::Accept()
 
 bool GioNet::Socket::Connect()
 {
-    // Connect to server.
     int result = connect( windowsSocket, addressInfo->ai_addr, static_cast<int>(addressInfo->ai_addrlen));
-    if (result == SOCKET_ERROR) {
+    if (result == SOCKET_ERROR)
+    {
+        WINSOCK_REPORT_ERROR();
         closesocket(windowsSocket);
         windowsSocket = INVALID_SOCKET;
     }
 
-    // Should really try the next address returned by getaddrinfo
-    // if the connect call failed
-    // But for this simple example we just free the resources
-    // returned by getaddrinfo and print an error message
     FreeAddressInfo();
 
     if (windowsSocket == INVALID_SOCKET) {
-        printf("Connection failed!\n");
         return false;
     }
 
-    printf("Connection successfully established!");
-    
     return true;
 }
 

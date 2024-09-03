@@ -26,13 +26,13 @@ namespace GioNet
         
         static void Reset() { instance.reset(); }
 
-        Server StartServer(const char* port = nullptr);
+        std::shared_ptr<Server> StartServer(const char* port = nullptr);
 
-        Client StartClient(const char* ip, const char* port = nullptr);
+        std::shared_ptr<Client> StartClient(const char* ip, const char* port = nullptr);
 
         std::shared_ptr<Socket> CreateAndBindServerSocket(const char* port = nullptr);
 
-        std::shared_ptr<Socket> CreateClientSocketAndConnect(const char* ip, const char* port = nullptr);
+        std::shared_ptr<Socket> CreateClientSocket(const char* ip, const char* port = nullptr);
 
     private:
         std::shared_ptr<Socket> CreateSocket(const char* ip, const char* port, const addrinfo& config);

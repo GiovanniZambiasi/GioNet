@@ -8,6 +8,16 @@ GioNet::Server::Server(const std::shared_ptr<Socket>& listenSocket)
 {
 }
 
+GioNet::Server::~Server()
+{
+    for (std::thread& thread : threads)
+    {
+        thread.detach();
+    }
+
+    threads.clear();
+}
+
 void GioNet::Server::Listen()
 {
     assert(listenSocket && listenSocket->IsValid());
@@ -15,9 +25,16 @@ void GioNet::Server::Listen()
     threads.emplace_back(&Server::ConnectionLoop, this);
 }
 
+void GioNet::Server::SendToPeer(const Peer& peer, const char* buffer, int len)
+{
+    listenSocket->SendTo(peer.windowsSocket, buffer, len);
+}
+
 void GioNet::Server::AddConnectedPeer(const Peer& peer)
 {
     connectedPeers.push_back(peer);
+    const char* buffer = "Hello from server!";
+    SendToPeer(peer, buffer, strlen(buffer) + 1);
     threads.emplace_back(&Server::ReceiveLoop, this, peer);
 }
 
@@ -34,11 +51,13 @@ void GioNet::Server::ConnectionLoop()
 
 void GioNet::Server::ReceiveLoop(const Peer& peer)
 {
-    while (true)
+    int received;
+    do
     {
-        char buffer[512];
-        listenSocket->ReceiveFrom(peer.windowsSocket, &buffer[0], 512);
+        char buffer[GIONET_DEFAULT_BUFFER];
+        received = listenSocket->ReceiveFrom(peer.windowsSocket, &buffer[0], sizeof(buffer));
         printf("Received data from peer: '%s'\n", &buffer[0]);
     }
+    while (received != SOCKET_ERROR);
 }
 

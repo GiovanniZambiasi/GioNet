@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <iostream>
 #include <unordered_map>
 
@@ -16,8 +15,8 @@ int main(int argC, char* argV[])
     if(netMode == "server")
     {
         auto& sys = GioNet::NetSystem::Get();
-        GioNet::Server server = sys.StartServer();
-        server.Listen();
+        std::shared_ptr<GioNet::Server> server = sys.StartServer();
+        server->Listen();
         while (true)
         {
             
@@ -33,8 +32,8 @@ int main(int argC, char* argV[])
         }
         
         auto& sys = GioNet::NetSystem::Get();
-        GioNet::Client client = sys.StartClient(serverIpLoc->second.c_str());
-        client.SayHello();
+        std::shared_ptr<GioNet::Client> client = sys.StartClient(serverIpLoc->second.c_str());
+        client->SayHello();
         while (true)
         {
             

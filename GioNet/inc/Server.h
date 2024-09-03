@@ -21,8 +21,12 @@ namespace GioNet
         Server() = default;
         
         Server(const std::shared_ptr<Socket>& listenSocket);
+
+        ~Server();
         
         void Listen();
+
+        void SendToPeer(const Peer& peer, const char* buffer, int len);
 
     private:
         void AddConnectedPeer(const Peer& peer);

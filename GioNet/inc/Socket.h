@@ -29,6 +29,8 @@ namespace GioNet
 
         int Send(const char* buffer, int len);
 
+        int SendTo(SOCKET socket, const char* buffer, int len);
+
         int ReceiveFrom(SOCKET socket, char* buffer, int len);
 
         int Receive(char* buffer, int len);

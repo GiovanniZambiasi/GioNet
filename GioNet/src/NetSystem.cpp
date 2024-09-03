@@ -33,16 +33,18 @@ GioNet::NetSystem::~NetSystem()
     WINSOCK_CALL_AND_REPORT(WSACleanup())
 }
 
-GioNet::Server GioNet::NetSystem::StartServer(const char* port)
+std::shared_ptr<GioNet::Server> GioNet::NetSystem::StartServer(const char* port)
 {
     std::shared_ptr<Socket> socket = CreateAndBindServerSocket(port);
-    return {socket};
+    return std::make_shared<Server>(socket);
 }
 
-GioNet::Client GioNet::NetSystem::StartClient(const char* ip, const char* port)
+std::shared_ptr<GioNet::Client> GioNet::NetSystem::StartClient(const char* ip, const char* port)
 {
-    std::shared_ptr<Socket> socket = CreateClientSocketAndConnect(ip, port);
-    return {socket};
+    std::shared_ptr<Socket> socket = CreateClientSocket(ip, port);
+    std::shared_ptr<Client> client = std::make_shared<Client>(socket);
+    client->Connect();
+    return client;
 }
 
 std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateAndBindServerSocket(const char* port)
@@ -59,7 +61,7 @@ std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateAndBindServerSocket(con
     return socket;
 }
 
-std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateClientSocketAndConnect(const char* ip, const char* port)
+std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateClientSocket(const char* ip, const char* port)
 {
     addrinfo hints{};
     memset(&hints, 0, sizeof(hints));
@@ -68,7 +70,6 @@ std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateClientSocketAndConnect(
     hints.ai_protocol = IPPROTO_TCP;
 
     std::shared_ptr<Socket> socket = CreateSocket(ip, port, hints);
-    socket->Connect();
     return socket;
 }
 
