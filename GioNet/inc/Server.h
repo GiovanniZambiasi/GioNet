@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <memory>
+#include <thread>
 #include <vector>
 #include "Peer.h"
 
@@ -14,6 +15,8 @@ namespace GioNet
 
         std::vector<Peer> connectedPeers{};
 
+        std::vector<std::thread> threads{};
+
     public:
         Server() = default;
         
@@ -23,5 +26,9 @@ namespace GioNet
 
     private:
         void AddConnectedPeer(const Peer& peer);
+
+        void ConnectionLoop();
+
+        void ReceiveLoop(const Peer& peer);
     };
 }

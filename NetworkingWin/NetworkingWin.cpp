@@ -34,6 +34,7 @@ int main(int argC, char* argV[])
         
         auto& sys = GioNet::NetSystem::Get();
         GioNet::Client client = sys.StartClient(serverIpLoc->second.c_str());
+        client.SayHello();
         while (true)
         {
             
@@ -44,6 +45,8 @@ int main(int argC, char* argV[])
         printf("[ERROR] No execution mode has been specified\n");
         return 1;
     }
+
+
 }
 
 void ParseArgs(int argC, char* argV[])

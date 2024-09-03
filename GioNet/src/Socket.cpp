@@ -14,6 +14,37 @@ GioNet::Socket::~Socket()
     windowsSocket = INVALID_SOCKET;
 }
 
+int GioNet::Socket::Send(const char* buffer, int len)
+{
+    int res = send(windowsSocket, buffer, len, 0);
+
+    if(res == SOCKET_ERROR)
+    {
+        WINSOCK_REPORT_ERROR();
+        return SOCKET_ERROR;
+    }
+
+    return res;
+}
+
+int GioNet::Socket::ReceiveFrom(SOCKET socket, char* buffer, int len)
+{
+    int result = recv(socket, buffer, len, 0);
+
+    if(result == SOCKET_ERROR)
+    {
+        WINSOCK_REPORT_ERROR();
+        return SOCKET_ERROR;
+    }
+
+    return result;
+}
+
+int GioNet::Socket::Receive(char* buffer, int len)
+{
+    return ReceiveFrom(windowsSocket, buffer, len);
+}
+
 bool GioNet::Socket::Bind()
 {
     int errorCode = bind(windowsSocket, addressInfo->ai_addr, static_cast<int>(addressInfo->ai_addrlen));

@@ -13,6 +13,8 @@ namespace GioNet
         Client() = default;
 
         Client(const std::shared_ptr<Socket>& socket);
+
+        void SayHello();
         
     };    
 }

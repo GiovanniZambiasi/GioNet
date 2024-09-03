@@ -27,6 +27,12 @@ namespace GioNet
             return windowsSocket != INVALID_SOCKET;
         }
 
+        int Send(const char* buffer, int len);
+
+        int ReceiveFrom(SOCKET socket, char* buffer, int len);
+
+        int Receive(char* buffer, int len);
+    
         // SERVER
         bool Bind();
 
