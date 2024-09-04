@@ -33,14 +33,14 @@ GioNet::NetSystem::~NetSystem()
     WINSOCK_CALL_AND_REPORT(WSACleanup())
 }
 
-std::shared_ptr<GioNet::Server> GioNet::NetSystem::StartServer(unsigned short port)
+std::shared_ptr<GioNet::Server> GioNet::NetSystem::StartServer(unsigned short port, CommunicationProtocols protocol)
 {
-    return std::make_shared<Server>(port);
+    return std::make_shared<Server>(port, protocol);
 }
 
-std::shared_ptr<GioNet::Client> GioNet::NetSystem::StartClient(const char* ip, unsigned short port)
+std::shared_ptr<GioNet::Client> GioNet::NetSystem::StartClient(const char* ip, unsigned short port, CommunicationProtocols protocol)
 {
-    std::shared_ptr<Client> client = std::make_shared<Client>(NetAddress{ip, port});
-    client->Connect();
+    std::shared_ptr<Client> client = std::make_shared<Client>(NetAddress{ip, port}, protocol);
+    client->Start();
     return client;
 }

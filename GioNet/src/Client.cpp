@@ -3,14 +3,14 @@
 #include <assert.h>
 #include "Socket.h"
 
-GioNet::Client::Client(const NetAddress& address)
+GioNet::Client::Client(const NetAddress& address, CommunicationProtocols protocol)
 {
-    socket = std::make_shared<Socket>(address, CommunicationProtocols::TCP);
+    socket = std::make_shared<Socket>(address, protocol);
 }
 
 GioNet::Client::~Client()
 {
-    Disconnect();
+    Stop();
 }
 
 void GioNet::Client::SayHello()
@@ -19,20 +19,32 @@ void GioNet::Client::SayHello()
     socket->Send(buffer, strlen(buffer) + 1);
 }
 
-void GioNet::Client::Connect()
+void GioNet::Client::Start()
 {
-    if(socket->Connect())
+    switch (socket->GetProtocol())
     {
-        printf("Successfully connected to server\n");
+    case CommunicationProtocols::TCP:
+        if(socket->Connect())
+        {
+            printf("Successfully connected to server\n");
+            listenThread = std::thread{&Client::ReceiveLoop, this};
+        }
+        else
+        {
+            printf("Connection failed!\n");
+        }
+        break;
+    case CommunicationProtocols::UDP:
+        printf("Client started receiving datagrams..\n");
         listenThread = std::thread{&Client::ReceiveLoop, this};
-    }
-    else
-    {
-        printf("Connection failed!\n");
+        break;
+    default:
+        printf("[ERROR]: Unimplemented protocol\n");
+        break;
     }
 }
 
-void GioNet::Client::Disconnect()
+void GioNet::Client::Stop()
 {
     if(socket->IsValid())
     {

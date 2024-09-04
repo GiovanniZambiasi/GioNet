@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "Core.h"
@@ -31,13 +32,17 @@ namespace GioNet
         Socket(Socket&& other) = default;
         Socket& operator=(Socket&& other) = default;
 
+        CommunicationProtocols GetProtocol() const { return protocol; }
+
+        const NetAddress& GetAddress() const { return address; }
+        
         bool IsValid() const;
 
         std::string ToString() const;
 
-        int Send(const char* buffer, int len);
+        int Send(const char* buffer, int len, std::optional<NetAddress> destination = {});
 
-        int Receive(char* buffer, int len);
+        int Receive(char* buffer, int len, NetAddress* outFrom = nullptr);
     
         // SERVER
         bool Bind();

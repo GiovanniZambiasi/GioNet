@@ -4,6 +4,7 @@
 
 namespace GioNet
 {
+    enum class CommunicationProtocols;
     struct NetAddress;
     class Socket;
 
@@ -16,15 +17,15 @@ namespace GioNet
     public:
         Client() = default;
 
-        Client(const NetAddress& address);
+        Client(const NetAddress& address, CommunicationProtocols protocol);
         
         ~Client();
         
         void SayHello();
         
-        void Connect();
+        void Start();
 
-        void Disconnect();
+        void Stop();
 
     private:
         void ReceiveLoop();

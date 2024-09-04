@@ -3,15 +3,15 @@
 #include <string>
 #include "Socket.h"
 
-GioNet::Server::Server(unsigned short port)
+GioNet::Server::Server(unsigned short port, CommunicationProtocols protocol)
 {
-    listenSocket = std::make_shared<Socket>(NetAddress{"", port}, CommunicationProtocols::TCP);
+    listenSocket = std::make_shared<Socket>(NetAddress{"", port}, protocol);
     listenSocket->Bind();
 }
 
 GioNet::Server::~Server()
 {
-    for (auto& entry : connectionThreads)
+    for (auto& entry : receiveThreads)
     {
         entry.second.detach();
     }
@@ -19,20 +19,32 @@ GioNet::Server::~Server()
     listenThread.detach();
 }
 
-void GioNet::Server::Listen()
+void GioNet::Server::Start()
 {
     assert(listenSocket && listenSocket->IsValid());
 
-    if (listenSocket->Listen())
+    switch (listenSocket->GetProtocol())
     {
-        listenThread = std::thread{&Server::ConnectionLoop, this};
+    case CommunicationProtocols::TCP:
+        if (listenSocket->Listen())
+        {
+            listenThread = std::thread{&Server::ConnectionLoop, this};
+        }
+        break;
+    case CommunicationProtocols::UDP:
+        printf("Server started receiving data...\n");
+        listenThread = std::thread{&Server::ReceiveLoop, this, listenSocket};
+        break;
+    default:
+        printf("[ERROR]: Unimplemented protocol!");
+        break;
     }
 }
 
 void GioNet::Server::SendToPeer(const std::shared_ptr<Socket>& peer, const char* buffer, int len)
 {
-    auto connection = connectionThreads.find(peer);
-    if(connection == connectionThreads.end())
+    auto connection = receiveThreads.find(peer);
+    if(connection == receiveThreads.end())
     {
         printf("[ERROR]: Tried to send data to peer %s, but it's not connected", peer->ToString().c_str());
         return;
@@ -44,21 +56,18 @@ void GioNet::Server::SendToPeer(const std::shared_ptr<Socket>& peer, const char*
 void GioNet::Server::AddPeer(const std::shared_ptr<Socket>& peer)
 {
     std::unique_lock _{connectionMutex};
-    connectionThreads[peer] = std::thread{&Server::ReceiveLoop, this, peer};
-    
-    const char* buffer = "Hello from server!";
-    SendToPeer(peer, buffer, strlen(buffer) + 1);
+    receiveThreads[peer] = std::thread{&Server::ReceiveLoop, this, peer};
 }
 
 void GioNet::Server::RemovePeer(const std::shared_ptr<Socket>& peer)
 {
     std::unique_lock _{connectionMutex};
 
-    auto receiveThread = connectionThreads.find(peer);
-    if(receiveThread != connectionThreads.end())
+    auto receiveThread = receiveThreads.find(peer);
+    if(receiveThread != receiveThreads.end())
     {
         receiveThread->second.detach();
-        connectionThreads.erase(peer);
+        receiveThreads.erase(peer);
     }
     
     printf("Disconnecting peer %s\n", peer->ToString().c_str());
@@ -91,11 +100,15 @@ void GioNet::Server::ReceiveLoop(const std::shared_ptr<Socket>& peer)
     do
     {
         char buffer[GIONET_DEFAULT_BUFFER];
-        received = peer->Receive(&buffer[0], sizeof(buffer));
+        NetAddress source{};
+        received = peer->Receive(&buffer[0], sizeof(buffer), &source);
 
         if(received > 0)
         {
             printf("Received data from peer: '%s'\n", &buffer[0]);
+
+            const char* buffer = "Hello from server!";
+            peer->Send(buffer, strlen(buffer) + 1, source);
         }
         else
         {
