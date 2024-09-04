@@ -3,9 +3,9 @@
 #include <assert.h>
 #include "Socket.h"
 
-GioNet::Client::Client(const std::shared_ptr<Socket>& socket)
-    : socket(socket)
+GioNet::Client::Client(const NetAddress& address)
 {
+    socket = std::make_shared<Socket>(address, CommunicationProtocols::TCP);
 }
 
 GioNet::Client::~Client()

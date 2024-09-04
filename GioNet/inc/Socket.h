@@ -1,4 +1,7 @@
 ﻿#pragma once
+#include <memory>
+#include <string>
+
 #include "Core.h"
 
 namespace GioNet
@@ -7,12 +10,18 @@ namespace GioNet
     
     class Socket
     {
-        SOCKET windowsSocket{INVALID_SOCKET};
-        addrinfo* addressInfo{nullptr};
+        NetAddress address{};
 
+        CommunicationProtocols protocol{};
+        
+        SOCKET winSocket{INVALID_SOCKET};
+
+        addrinfo* winAddrInfo{nullptr};
+        
     public:
         Socket() = default;
-        Socket(SOCKET socket, addrinfo* addrInfo);
+        
+        Socket(const NetAddress& address, CommunicationProtocols protocol);
 
         ~Socket();
 
@@ -24,11 +33,9 @@ namespace GioNet
 
         bool IsValid() const;
 
+        std::string ToString() const;
+
         int Send(const char* buffer, int len);
-
-        int SendTo(SOCKET socket, const char* buffer, int len);
-
-        int ReceiveFrom(SOCKET socket, char* buffer, int len);
 
         int Receive(char* buffer, int len);
     
@@ -37,14 +44,15 @@ namespace GioNet
 
         bool Listen();
 
-        Peer Accept();
+        std::shared_ptr<Socket> Accept();
 
         //CLIENT
         bool Connect();
 
         void Close();
-        
+
     private:
         void FreeAddressInfo();
+        
     };
 }

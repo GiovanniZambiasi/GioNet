@@ -1,5 +1,8 @@
-﻿#ifndef WIN32_LEAN_AND_MEAN
+﻿#pragma once
+
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#include <string>
 #endif
 
 #include <WinSock2.h>
@@ -7,7 +10,7 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-#define GIONET_DEFAULT_PORT "27015"
+#define GIONET_DEFAULT_PORT 27015
 
 #define GIONET_DEFAULT_BUFFER 512 
 
@@ -29,4 +32,21 @@
     bool success = Call == 0;\
     if(!success)\
     { WINSOCK_REPORT_ERROR(); }\
-    
+
+namespace GioNet
+{
+    enum class CommunicationProtocols
+    {
+        TCP,
+        UDP,
+    };
+
+    struct NetAddress
+    {
+        std::string ip{};
+
+        unsigned short port{0};
+
+        bool IsServer() const { return ip.empty(); }
+    };
+}

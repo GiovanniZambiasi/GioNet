@@ -15,7 +15,7 @@ int main(int argC, char* argV[])
     if(netMode == "server")
     {
         auto& sys = GioNet::NetSystem::Get();
-        std::shared_ptr<GioNet::Server> server = sys.StartServer();
+        std::shared_ptr<GioNet::Server> server = sys.StartServer(GIONET_DEFAULT_PORT);
         server->Listen();
         while (true)
         {
@@ -32,7 +32,7 @@ int main(int argC, char* argV[])
         }
         
         auto& sys = GioNet::NetSystem::Get();
-        std::shared_ptr<GioNet::Client> client = sys.StartClient(serverIpLoc->second.c_str());
+        std::shared_ptr<GioNet::Client> client = sys.StartClient(serverIpLoc->second.c_str(), GIONET_DEFAULT_PORT);
         client->SayHello();
         while (true)
         {

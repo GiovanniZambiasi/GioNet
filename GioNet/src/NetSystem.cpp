@@ -33,66 +33,14 @@ GioNet::NetSystem::~NetSystem()
     WINSOCK_CALL_AND_REPORT(WSACleanup())
 }
 
-std::shared_ptr<GioNet::Server> GioNet::NetSystem::StartServer(const char* port)
+std::shared_ptr<GioNet::Server> GioNet::NetSystem::StartServer(unsigned short port)
 {
-    std::shared_ptr<Socket> socket = CreateAndBindServerSocket(port);
-    return std::make_shared<Server>(socket);
+    return std::make_shared<Server>(port);
 }
 
-std::shared_ptr<GioNet::Client> GioNet::NetSystem::StartClient(const char* ip, const char* port)
+std::shared_ptr<GioNet::Client> GioNet::NetSystem::StartClient(const char* ip, unsigned short port)
 {
-    std::shared_ptr<Socket> socket = CreateClientSocket(ip, port);
-    std::shared_ptr<Client> client = std::make_shared<Client>(socket);
+    std::shared_ptr<Client> client = std::make_shared<Client>(NetAddress{ip, port});
     client->Connect();
     return client;
-}
-
-std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateAndBindServerSocket(const char* port)
-{
-    addrinfo hints{};
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
-
-    std::shared_ptr<Socket> socket = CreateSocket(nullptr, port, hints);
-    socket->Bind();
-    return socket;
-}
-
-std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateClientSocket(const char* ip, const char* port)
-{
-    addrinfo hints{};
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    std::shared_ptr<Socket> socket = CreateSocket(ip, port, hints);
-    return socket;
-}
-
-std::shared_ptr<GioNet::Socket> GioNet::NetSystem::CreateSocket(const char* ip, const char* port, const addrinfo& config)
-{
-    addrinfo* result{nullptr};
-    WINSOCK_CALL_AND_REPORT(getaddrinfo(ip, port ? port : GIONET_DEFAULT_PORT, &config, &result))
-   
-    if(!success)
-    {
-        return {};
-    }
-
-    std::shared_ptr<Socket> s = std::make_shared<Socket>(
-        socket(result->ai_family, result->ai_socktype, result->ai_protocol),
-        result
-    );
-
-    if(!s->IsValid())
-    {
-        WINSOCK_REPORT_ERROR();
-        return {};
-    }
-
-    return s;
 }

@@ -4,6 +4,7 @@
 
 namespace GioNet
 {
+    struct NetAddress;
     class Socket;
 
     class Client
@@ -15,8 +16,8 @@ namespace GioNet
     public:
         Client() = default;
 
-        Client(const std::shared_ptr<Socket>& socket);
-
+        Client(const NetAddress& address);
+        
         ~Client();
         
         void SayHello();

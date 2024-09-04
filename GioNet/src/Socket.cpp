@@ -1,16 +1,44 @@
 ﻿#include "Socket.h"
 #include <cstdio>
+#include <format>
 
-#include "Peer.h"
-
-GioNet::Socket::Socket(SOCKET socket, addrinfo* addrInfo)
-    : windowsSocket(socket), addressInfo(addrInfo)
+GioNet::Socket::Socket(const NetAddress& address, CommunicationProtocols protocol)
+    : address(address), protocol(protocol)
 {
+    addrinfo info{};
+    ZeroMemory(&info, sizeof(addrinfo));
+    info.ai_family = AF_INET;
+
+    switch (protocol)
+    {
+    case CommunicationProtocols::UDP:
+        info.ai_socktype = SOCK_DGRAM;
+        info.ai_protocol  = IPPROTO_UDP;
+        break;
+    default:
+        info.ai_socktype = SOCK_STREAM;
+        info.ai_protocol = IPPROTO_TCP;
+        break;
+    }
+
+    std::string portString = std::to_string(address.port);
+    
+    WINSOCK_CALL_AND_REPORT(getaddrinfo(address.IsServer() ? (PCSTR)INADDR_ANY : address.ip.c_str(), portString.c_str(), &info, &winAddrInfo))
+
+    if(success)
+    {
+        winSocket = socket(winAddrInfo->ai_family, winAddrInfo->ai_socktype, winAddrInfo->ai_protocol);
+
+        if(winSocket == INVALID_SOCKET)
+        {
+            Close();
+        }
+    }
 }
 
 GioNet::Socket::~Socket()
 {
-    if(windowsSocket != INVALID_SOCKET)
+    if(winSocket != INVALID_SOCKET)
     {
         Close();
     }
@@ -18,17 +46,17 @@ GioNet::Socket::~Socket()
 
 bool GioNet::Socket::IsValid() const
 {
-    return windowsSocket != INVALID_SOCKET;
+    return winSocket != INVALID_SOCKET;
+}
+
+std::string GioNet::Socket::ToString() const
+{
+    return std::format("(SOCKET:{} IP:{}:{})", winSocket, address.ip.c_str(), address.port);
 }
 
 int GioNet::Socket::Send(const char* buffer, int len)
 {
-    return SendTo(windowsSocket, buffer, len);
-}
-
-int GioNet::Socket::SendTo(SOCKET socket, const char* buffer, int len)
-{
-    int res = send(socket, buffer, len, 0);
+    int res = send(winSocket, buffer, len, 0);
 
     if(res == SOCKET_ERROR)
     {
@@ -39,9 +67,9 @@ int GioNet::Socket::SendTo(SOCKET socket, const char* buffer, int len)
     return res;
 }
 
-int GioNet::Socket::ReceiveFrom(SOCKET socket, char* buffer, int len)
+int GioNet::Socket::Receive(char* buffer, int len)
 {
-    int result = recv(socket, buffer, len, 0);
+    int result = recv(winSocket, buffer, len, 0);
 
     if(result == SOCKET_ERROR)
     {
@@ -52,14 +80,9 @@ int GioNet::Socket::ReceiveFrom(SOCKET socket, char* buffer, int len)
     return result;
 }
 
-int GioNet::Socket::Receive(char* buffer, int len)
-{
-    return ReceiveFrom(windowsSocket, buffer, len);
-}
-
 bool GioNet::Socket::Bind()
 {
-    int errorCode = bind(windowsSocket, addressInfo->ai_addr, static_cast<int>(addressInfo->ai_addrlen));
+    int errorCode = bind(winSocket, winAddrInfo->ai_addr, static_cast<int>(winAddrInfo->ai_addrlen));
 
     if (errorCode == SOCKET_ERROR)
     {
@@ -76,7 +99,7 @@ bool GioNet::Socket::Bind()
 
 bool GioNet::Socket::Listen()
 {
-    if ( listen( windowsSocket, SOMAXCONN ) == SOCKET_ERROR ) {
+    if ( listen( winSocket, SOMAXCONN ) == SOCKET_ERROR ) {
         WINSOCK_REPORT_ERROR();
         Close();
         return false;
@@ -85,14 +108,15 @@ bool GioNet::Socket::Listen()
     return true;
 }
 
-GioNet::Peer GioNet::Socket::Accept()
+std::shared_ptr<GioNet::Socket> GioNet::Socket::Accept()
 {
+    // TODO - Only do this if TCP
     sockaddr_in addr{};
     ZeroMemory(&addr, sizeof(sockaddr_in));
     int size = sizeof(addr);
-    SOCKET ClientSocket = accept(windowsSocket,reinterpret_cast<sockaddr*>(&addr), &size);
+    SOCKET clientSocket = accept(winSocket,reinterpret_cast<sockaddr*>(&addr), &size);
     
-    if (ClientSocket == INVALID_SOCKET)
+    if (clientSocket == INVALID_SOCKET)
     {
         WINSOCK_REPORT_ERROR();
         return {};
@@ -101,12 +125,14 @@ GioNet::Peer GioNet::Socket::Accept()
     char buff[16];
     inet_ntop(addr.sin_family, addr.sin_zero, &buff[0], sizeof(buff));
 
-    return {ClientSocket, {buff}, addr.sin_port};
+    std::shared_ptr<Socket> connectionSocket = std::make_shared<Socket>();
+    connectionSocket->winSocket = clientSocket;
+    return connectionSocket;
 }
 
 bool GioNet::Socket::Connect()
 {
-    int result = connect( windowsSocket, addressInfo->ai_addr, static_cast<int>(addressInfo->ai_addrlen));
+    int result = connect( winSocket, winAddrInfo->ai_addr, static_cast<int>(winAddrInfo->ai_addrlen));
     if (result == SOCKET_ERROR)
     {
         WINSOCK_REPORT_ERROR();
@@ -115,7 +141,7 @@ bool GioNet::Socket::Connect()
 
     FreeAddressInfo();
 
-    if (windowsSocket == INVALID_SOCKET) {
+    if (winSocket == INVALID_SOCKET) {
         return false;
     }
 
@@ -126,18 +152,18 @@ void GioNet::Socket::Close()
 {
     FreeAddressInfo();
 
-    if(windowsSocket != INVALID_SOCKET)
+    if(winSocket != INVALID_SOCKET)
     {
-        closesocket(windowsSocket);
-        windowsSocket = INVALID_SOCKET;
+        closesocket(winSocket);
+        winSocket = INVALID_SOCKET;
     }
 }
 
 void GioNet::Socket::FreeAddressInfo()
 {
-    if(addressInfo != nullptr)
+    if(winAddrInfo != nullptr)
     {
-        freeaddrinfo(addressInfo);
-        addressInfo = nullptr;
+        freeaddrinfo(winAddrInfo);
+        winAddrInfo = nullptr;
     }
 }

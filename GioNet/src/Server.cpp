@@ -3,9 +3,10 @@
 #include <string>
 #include "Socket.h"
 
-GioNet::Server::Server(const std::shared_ptr<Socket>& listenSocket)
-    : listenSocket(listenSocket)
+GioNet::Server::Server(unsigned short port)
 {
+    listenSocket = std::make_shared<Socket>(NetAddress{"", port}, CommunicationProtocols::TCP);
+    listenSocket->Bind();
 }
 
 GioNet::Server::~Server()
@@ -21,24 +22,35 @@ GioNet::Server::~Server()
 void GioNet::Server::Listen()
 {
     assert(listenSocket && listenSocket->IsValid());
-    listenSocket->Listen();
-    listenThread = std::thread{&Server::ConnectionLoop, this};
+
+    if (listenSocket->Listen())
+    {
+        listenThread = std::thread{&Server::ConnectionLoop, this};
+    }
 }
 
-void GioNet::Server::SendToPeer(const Peer& peer, const char* buffer, int len)
+void GioNet::Server::SendToPeer(const std::shared_ptr<Socket>& peer, const char* buffer, int len)
 {
-    listenSocket->SendTo(peer.windowsSocket, buffer, len);
+    auto connection = connectionThreads.find(peer);
+    if(connection == connectionThreads.end())
+    {
+        printf("[ERROR]: Tried to send data to peer %s, but it's not connected", peer->ToString().c_str());
+        return;
+    }
+
+    connection->first->Send(buffer, len);
 }
 
-void GioNet::Server::AddPeer(const Peer& peer)
+void GioNet::Server::AddPeer(const std::shared_ptr<Socket>& peer)
 {
     std::unique_lock _{connectionMutex};
+    connectionThreads[peer] = std::thread{&Server::ReceiveLoop, this, peer};
+    
     const char* buffer = "Hello from server!";
     SendToPeer(peer, buffer, strlen(buffer) + 1);
-    connectionThreads[peer] = std::thread{&Server::ReceiveLoop, this, peer};
 }
 
-void GioNet::Server::RemovePeer(const Peer& peer)
+void GioNet::Server::RemovePeer(const std::shared_ptr<Socket>& peer)
 {
     std::unique_lock _{connectionMutex};
 
@@ -49,7 +61,7 @@ void GioNet::Server::RemovePeer(const Peer& peer)
         connectionThreads.erase(peer);
     }
     
-    printf("Disconnecting peer %s\n", peer.ToString().c_str());
+    printf("Disconnecting peer %s\n", peer->ToString().c_str());
 }
 
 void GioNet::Server::ConnectionLoop()
@@ -57,11 +69,11 @@ void GioNet::Server::ConnectionLoop()
     while (true)
     {
         printf("Server listening for connections...\n");
-        Peer client = listenSocket->Accept();
+        std::shared_ptr<Socket> client = listenSocket->Accept();
         
-        if(client.IsValid())
+        if(client->IsValid())
         {
-            printf("Successfully connected to client %s\n", client.ToString().c_str());
+            printf("Successfully connected to client\n");
             AddPeer(client);
         }
         else if(!listenSocket->IsValid())
@@ -73,13 +85,13 @@ void GioNet::Server::ConnectionLoop()
     printf("Connection loop finished because connection was lost\n");
 }
 
-void GioNet::Server::ReceiveLoop(const Peer& peer)
+void GioNet::Server::ReceiveLoop(const std::shared_ptr<Socket>& peer)
 {
     int received;
     do
     {
         char buffer[GIONET_DEFAULT_BUFFER];
-        received = listenSocket->ReceiveFrom(peer.windowsSocket, &buffer[0], sizeof(buffer));
+        received = peer->Receive(&buffer[0], sizeof(buffer));
 
         if(received > 0)
         {

@@ -22,7 +22,6 @@
     <ClCompile Include="src\Client.cpp" />
     <ClCompile Include="src\Core.cpp" />
     <ClCompile Include="src\NetSystem.cpp" />
-    <ClCompile Include="src\Peer.cpp" />
     <ClCompile Include="src\Server.cpp" />
     <ClCompile Include="src\Socket.cpp" />
   </ItemGroup>
@@ -31,7 +30,6 @@
     <ClInclude Include="inc\GioNet.h" />
     <ClInclude Include="inc\Core.h" />
     <ClInclude Include="inc\NetSystem.h" />
-    <ClInclude Include="inc\Peer.h" />
     <ClInclude Include="inc\Server.h" />
     <ClInclude Include="inc\Socket.h" />
   </ItemGroup>

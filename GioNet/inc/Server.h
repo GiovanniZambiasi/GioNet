@@ -3,18 +3,16 @@
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
-#include "Peer.h"
 
 namespace GioNet
 {
     class Socket;
-    struct Peer;
 
     class Server
     {
         std::shared_ptr<Socket> listenSocket{};
 
-        std::unordered_map<Peer, std::thread> connectionThreads{};
+        std::unordered_map<std::shared_ptr<Socket>, std::thread> connectionThreads{};
 
         std::thread listenThread{};
         
@@ -22,22 +20,22 @@ namespace GioNet
 
     public:
         Server() = default;
-        
-        Server(const std::shared_ptr<Socket>& listenSocket);
 
+        Server(unsigned short port);
+        
         ~Server();
         
         void Listen();
 
-        void SendToPeer(const Peer& peer, const char* buffer, int len);
+        void SendToPeer(const std::shared_ptr<Socket>& peer, const char* buffer, int len);
 
     private:
-        void AddPeer(const Peer& peer);
+        void AddPeer(const std::shared_ptr<Socket>& peer);
 
-        void RemovePeer(const Peer& peer);
+        void RemovePeer(const std::shared_ptr<Socket>& peer);
 
         void ConnectionLoop();
 
-        void ReceiveLoop(const Peer& peer);
+        void ReceiveLoop(const std::shared_ptr<Socket>& peer);
     };
 }
