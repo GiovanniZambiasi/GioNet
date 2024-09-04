@@ -25,6 +25,11 @@ GioNet::Socket::Socket(const NetAddress& address, CommunicationProtocols protoco
     default:
         info.ai_socktype = SOCK_STREAM;
         info.ai_protocol = IPPROTO_TCP;
+        
+        if(address.IsServer())
+        {
+            info.ai_flags = AI_PASSIVE;
+        }
         break;
     }
 
