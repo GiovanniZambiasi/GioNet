@@ -19,7 +19,6 @@ void GioNet::ClientTCP::Start()
     {
         printf("Successfully connected to server!\n");
         RunListenThread();
-        socket.Send(Buffer{"Ping!"});
     }
     else
     {
@@ -30,4 +29,9 @@ void GioNet::ClientTCP::Start()
 std::optional<GioNet::Buffer> GioNet::ClientTCP::DoReceive()
 {
     return GetSocketChecked().Receive();
+}
+
+void GioNet::ClientTCP::Send(const Buffer& buffer)
+{
+    GetSocketChecked().Send(buffer);
 }

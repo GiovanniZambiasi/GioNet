@@ -3,6 +3,7 @@
 #include <memory>
 #include <thread>
 
+#include "Buffer.h"
 #include "Socket.h"
 
 namespace GioNet
@@ -20,11 +21,11 @@ namespace GioNet
     public:
         virtual ~Client();
         
-        void SayHello();
-        
         virtual void Start();
 
         void Stop();
+
+        virtual void Send(const Buffer& buffer) = 0;
         
         bool IsConnected() const;
 

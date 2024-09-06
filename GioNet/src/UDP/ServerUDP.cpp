@@ -30,13 +30,21 @@ void GioNet::ServerUDP::RunListenThread()
 
         if(received)
         {
+            if(!HasPeer(source))
+            {
+                AddPeer(Peer{source, nullptr});
+            }
+            
             printf("Received data: %s\n", received->Data());
-            socket->SendTo({"Pong!"}, source);
-            // Should probably add connection to source
         }
         else
         {
-            Stop();
+            // TODO - Fix recv failed after a broken send
         }
     }
+}
+
+std::optional<int> GioNet::ServerUDP::DoSend(const Buffer& buffer, const Peer& peer)
+{
+    return GetSocketChecked().SendTo(buffer, peer.address);
 }

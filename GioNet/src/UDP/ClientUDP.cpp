@@ -13,12 +13,15 @@ void GioNet::ClientUDP::Start()
 {
     Client::Start();
     printf("Starting UDP client...\n");
-    // No implicit connection. Implement connection communication via messages
     RunListenThread();
-    GetSocketChecked().SendTo(Buffer{"Ping!"});
 }
 
 std::optional<GioNet::Buffer> GioNet::ClientUDP::DoReceive()
 {
     return GetSocketChecked().ReceiveFrom();
+}
+
+void GioNet::ClientUDP::Send(const Buffer& buffer)
+{
+    GetSocketChecked().SendTo(buffer);
 }

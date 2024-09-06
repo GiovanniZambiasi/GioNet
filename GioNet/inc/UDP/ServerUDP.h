@@ -16,5 +16,7 @@ namespace GioNet
         void Start() override;
 
         void RunListenThread();
+        
+        std::optional<int> DoSend(const Buffer& buffer, const Peer& peer) override;
     };   
 }

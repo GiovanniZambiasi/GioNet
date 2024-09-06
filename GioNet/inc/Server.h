@@ -4,6 +4,7 @@
 #include <shared_mutex>
 #include <unordered_map>
 
+#include "Buffer.h"
 #include "Core.h"
 #include "Socket.h"
 
@@ -27,7 +28,7 @@ namespace GioNet
     {
         std::shared_ptr<Socket> listenSocket{};
 
-        std::vector<Peer> peers{};
+        std::unordered_map<NetAddress, Peer> peers{};
 
         std::shared_mutex peersMutex{};
 
@@ -38,6 +39,10 @@ namespace GioNet
         
         virtual void Start();
 
+        void Broadcast(const Buffer& buffer);
+
+        void Send(const Buffer& buffer, const Peer& peer);
+
         void Stop();
 
         Socket& GetSocketChecked()
@@ -47,7 +52,13 @@ namespace GioNet
         }
 
         std::shared_ptr<Socket> GetSocket() { return listenSocket; }
- 
+
+        const std::unordered_map<NetAddress, Peer>& GetPeers() const { return peers; }
+
+        bool HasPeer(const NetAddress& address) const { return peers.contains(address); }
+        
+        bool IsRunning() const { return listenSocket && listenSocket->IsValid(); }
+
     protected:
         Server(const std::shared_ptr<Socket>& listenSocket);
 
@@ -58,6 +69,8 @@ namespace GioNet
         virtual void OnPostPeerAdded(const Peer& peer) { }
 
         virtual void OnPrePeerRemoved(const Peer& peer) { }
+
+        virtual std::optional<int> DoSend(const Buffer& buffer, const Peer& peer) = 0;
 
     };
 }

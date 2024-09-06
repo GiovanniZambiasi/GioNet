@@ -80,7 +80,6 @@ void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer)
 
         if(received)
         {
-            // Yay! Got Data!
             printf("Data received from peer: %s\n", received->Data());
         }
         else
@@ -89,4 +88,12 @@ void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer)
             break;
         }
     }
+}
+
+std::optional<int> GioNet::ServerTCP::DoSend(const Buffer& buffer, const Peer& peer)
+{
+    if(peer.connection && peer.connection->IsValid())
+        return peer.connection->Send(buffer);
+    
+    return {};
 }

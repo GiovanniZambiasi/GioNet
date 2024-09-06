@@ -24,5 +24,7 @@ namespace GioNet
         void OnPrePeerRemoved(const Peer& peer) override;
 
         void RunReceiveThreadForPeer(const Peer& peer);
+
+        std::optional<int> DoSend(const Buffer& buffer, const Peer& peer) override;
     };
 }
