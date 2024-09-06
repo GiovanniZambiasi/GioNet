@@ -8,6 +8,7 @@
 namespace GioNet
 {
     struct Peer;
+    class Buffer;
     
     class Socket
     {
@@ -40,9 +41,9 @@ namespace GioNet
 
         std::string ToString() const;
 
-        int Send(const char* buffer, int len, std::optional<NetAddress> destination = {});
+        int Send(const Buffer& buffer, std::optional<NetAddress> destination = {});
 
-        int Receive(char* buffer, int len, NetAddress* outFrom = nullptr);
+        std::optional<Buffer> Receive(NetAddress* outFrom = nullptr);
     
         // SERVER
         bool Bind();

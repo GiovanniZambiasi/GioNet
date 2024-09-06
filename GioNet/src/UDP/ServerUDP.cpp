@@ -1,5 +1,7 @@
 ﻿#include "UDP/ServerUDP.h"
 
+#include "Buffer.h"
+
 
 GioNet::ServerUDP::ServerUDP(unsigned short port)
     : Server(std::make_shared<Socket>(NetAddress{"", port}, CommunicationProtocols::UDP))
@@ -23,16 +25,13 @@ void GioNet::ServerUDP::RunListenThread()
     std::shared_ptr<Socket> socket = GetSocket();
     while (socket && socket->IsValid())
     {
-        char buffer[GIONET_DEFAULT_BUFFER];
         NetAddress source{};
-        int bytesReceived = socket->Receive(buffer, sizeof(buffer), &source);
+        std::optional<Buffer> received = socket->Receive(&source);
 
-        if(bytesReceived > 0)
+        if(received)
         {
-            printf("Received data: %s\n", buffer);
-            
-            const char* greeting = "Greetings from server!";
-            socket->Send(greeting, 1 + strlen(greeting), source);
+            printf("Received data: %s\n", received->Data());
+            socket->Send({"Greetings from server!"}, source);
             // Should probably add connection to source
         }
         else

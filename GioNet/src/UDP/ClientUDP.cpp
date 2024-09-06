@@ -11,6 +11,7 @@ GioNet::ClientUDP::ClientUDP(const NetAddress& address)
 void GioNet::ClientUDP::Start()
 {
     Client::Start();
+    printf("Starting UDP client...\n");
     // No implicit connection. Implement connection communication via messages
     RunListenThread();
 }

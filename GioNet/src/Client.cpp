@@ -1,5 +1,6 @@
 ﻿#include "Client.h"
-#include <assert.h>
+
+#include "Buffer.h"
 #include "Socket.h"
 
 GioNet::Client::Client(const std::shared_ptr<Socket>& socket)
@@ -19,8 +20,7 @@ GioNet::Client::~Client()
 
 void GioNet::Client::SayHello()
 {
-    const char* buffer = "Hello from client!";
-    socket->Send(buffer, strlen(buffer) + 1);
+    socket->Send(Buffer{"Hello from client!"});
 }
 
 void GioNet::Client::Start()
@@ -47,15 +47,14 @@ void GioNet::Client::ListenThreadImpl()
 {
     while (socket && socket->IsValid())
     {
-        char buffer[GIONET_DEFAULT_BUFFER];
-        int bytesReceived = socket->Receive(&buffer[0], sizeof(buffer));
+        std::optional<Buffer> received = socket->Receive();
 
-        if (bytesReceived > 0)
+        if (received)
         {
             // YAY! DATA!
-            printf("Received data from server: %s\n", buffer);
+            printf("Received data from server: %s\n", received->Data());
         }
-        else if(bytesReceived == SOCKET_ERROR)
+        else
         {
             Stop();
         }

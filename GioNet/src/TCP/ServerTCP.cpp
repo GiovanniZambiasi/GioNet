@@ -2,6 +2,8 @@
 
 #include <ranges>
 
+#include "Buffer.h"
+
 GioNet::ServerTCP::ServerTCP(unsigned short port)
     : Server(std::make_shared<Socket>(NetAddress{"", port}, CommunicationProtocols::TCP))
 {    
@@ -54,8 +56,7 @@ void GioNet::ServerTCP::OnPostPeerAdded(const Peer& peer)
     Server::OnPostPeerAdded(peer);
     
     receiveThreads[peer.address] = std::thread{&ServerTCP::RunReceiveThreadForPeer, this, peer};
-    const char* greeting = "Greetings from server!";
-    peer.connection->Send(greeting, 1 + strlen(greeting));
+    peer.connection->Send({"Greetings from server!"});
 }
 
 void GioNet::ServerTCP::OnPrePeerRemoved(const Peer& peer)
@@ -75,15 +76,14 @@ void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer)
     std::shared_ptr<Socket> socket = peer.connection;
     while (socket && socket->IsValid())
     {
-        char buffer[GIONET_DEFAULT_BUFFER];
-        int receivedBytes = socket->Receive(buffer, sizeof(buffer));
+        std::optional<Buffer> received = socket->Receive();
 
-        if(receivedBytes > 0)
+        if(received)
         {
             // Yay! Got Data!
-            printf("Data received from peer: %s\n", buffer);
+            printf("Data received from peer: %s\n", received->Data());
         }
-        else if(receivedBytes == SOCKET_ERROR)  // TODO - Refactor socket receive so ServerTCP doesn't need to know about SOCKET_ERROR
+        else
         {
             RemovePeer(peer);
             break;

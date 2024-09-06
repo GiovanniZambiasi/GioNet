@@ -12,7 +12,7 @@
 
 #define GIONET_DEFAULT_PORT 27015
 
-#define GIONET_DEFAULT_BUFFER 512 
+#define GIONET_BUFFER_MAX 512 
 
 #define GIONET_NOCOPY(ClassName) \
     ClassName(const ClassName&) = delete;\

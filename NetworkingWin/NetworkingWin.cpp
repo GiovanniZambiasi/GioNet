@@ -4,7 +4,7 @@
 #include "GioNet.h"
 
 std::unordered_map<std::string, std::string> args{};
-GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::UDP;
+GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
 void ParseArgs(int argC, char* argV[]);
 
