@@ -26,12 +26,12 @@ void GioNet::ServerUDP::RunListenThread()
     while (socket && socket->IsValid())
     {
         NetAddress source{};
-        std::optional<Buffer> received = socket->Receive(&source);
+        std::optional<Buffer> received = socket->ReceiveFrom(&source);
 
         if(received)
         {
             printf("Received data: %s\n", received->Data());
-            socket->Send({"Greetings from server!"}, source);
+            socket->SendTo({"Pong!"}, source);
             // Should probably add connection to source
         }
         else

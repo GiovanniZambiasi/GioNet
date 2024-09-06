@@ -1,5 +1,6 @@
 ﻿#include "TCP/ClientTCP.h"
 
+#include "Buffer.h"
 #include "Core.h"
 #include "Socket.h"
 
@@ -18,9 +19,15 @@ void GioNet::ClientTCP::Start()
     {
         printf("Successfully connected to server!\n");
         RunListenThread();
+        socket.Send(Buffer{"Ping!"});
     }
     else
     {
         printf("Connection failed.\n");
     }
+}
+
+std::optional<GioNet::Buffer> GioNet::ClientTCP::DoReceive()
+{
+    return GetSocketChecked().Receive();
 }

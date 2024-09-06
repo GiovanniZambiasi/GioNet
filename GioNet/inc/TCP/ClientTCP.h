@@ -10,5 +10,8 @@ namespace GioNet
 
     private:
         void Start() override;
+
+        std::optional<Buffer> DoReceive() override;
+        
     };
 }

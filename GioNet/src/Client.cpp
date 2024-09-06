@@ -18,11 +18,6 @@ GioNet::Client::~Client()
     Stop();
 }
 
-void GioNet::Client::SayHello()
-{
-    socket->Send(Buffer{"Hello from client!"});
-}
-
 void GioNet::Client::Start()
 {
     assert(socket && socket->IsValid());
@@ -47,7 +42,7 @@ void GioNet::Client::ListenThreadImpl()
 {
     while (socket && socket->IsValid())
     {
-        std::optional<Buffer> received = socket->Receive();
+        std::optional<Buffer> received = DoReceive();
 
         if (received)
         {

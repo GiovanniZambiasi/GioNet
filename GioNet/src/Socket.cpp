@@ -67,105 +67,88 @@ std::string GioNet::Socket::ToString() const
     return std::format("(SOCKET:{} IP:{}:{})", winSocket, address.ip, address.port);
 }
 
-int GioNet::Socket::Send(const Buffer& buffer, std::optional<NetAddress> destination)
+std::optional<int> GioNet::Socket::Send(const Buffer& buffer)
 {
-    int res{};
-    switch (protocol)
+    assert(protocol == CommunicationProtocols::TCP);
+    int res = send(winSocket, buffer.Data(), buffer.Length(), 0);
+
+    if(res == SOCKET_ERROR)
     {
-    case CommunicationProtocols::TCP:
-        if(destination.has_value() && *destination != address)
-        {
-            printf("[ERROR]: TCP socket cannot send to arbitrary address. Can only send to connected sockets.\n");
-            return SOCKET_ERROR;
-        }
-        
-        res = send(winSocket, buffer.Data(), buffer.Length(), 0);
-
-        if(res == SOCKET_ERROR)
-        {
-            WINSOCK_REPORT_ERROR();
-            return SOCKET_ERROR;
-        }
-
-        return res;
-    case CommunicationProtocols::UDP:
-        if(destination.has_value())
-        {
-            sockaddr_in windowsSockAddr{};
-            windowsSockAddr.sin_family = GioNetAddressFamily;
-            windowsSockAddr.sin_port = destination->port;
-            in_addr windowsAddr{};
-            inet_pton(GioNetAddressFamily, destination->ip.c_str(), &windowsAddr);
-            windowsSockAddr.sin_addr = windowsAddr;
-            res = sendto(winSocket, buffer.Data(), buffer.Length(), 0, reinterpret_cast<sockaddr*>(&windowsSockAddr), sizeof(windowsSockAddr));
-        }
-        // For clients communicating with the server (no destination is required)
-        else
-        {
-            assert(winAddrInfo);
-            res = sendto(winSocket, buffer.Data(), buffer.Length(), 0, winAddrInfo->ai_addr, sizeof(sockaddr));
-        }
-
-        if(res == SOCKET_ERROR)
-        {
-            WINSOCK_REPORT_ERROR();
-            return SOCKET_ERROR;
-        }
-        
-        return res;
-    default:
-        printf("Unimplemented protocol...\n");
-        return -1;
+        WINSOCK_REPORT_ERROR();
+        return {};
     }
+
+    return {res};
 }
 
-std::optional<GioNet::Buffer> GioNet::Socket::Receive(NetAddress* outFrom)
+std::optional<int> GioNet::Socket::SendTo(const Buffer& buffer, std::optional<NetAddress> destination)
 {
-    int receivedBytes;
+    assert(protocol == CommunicationProtocols::UDP);
+    int res{};
     
-    switch (protocol)
+    if(destination.has_value())
     {
-    case CommunicationProtocols::TCP:
-        char received[GIONET_BUFFER_MAX];
-        receivedBytes = recv(winSocket, &received[0], sizeof(received), 0);
-
-        if(receivedBytes == SOCKET_ERROR)
-        {
-            WINSOCK_REPORT_ERROR();
-            return {};
-        }
-
-        if(outFrom)
-        {
-            *outFrom = address;
-        }
-        
-        return {Buffer{&received[0], receivedBytes}};
-    case CommunicationProtocols::UDP:
-        sockaddr_in from{};
-        int fromSize = sizeof(sockaddr_in);
-
-        char outBuffer[GIONET_BUFFER_MAX];
-        receivedBytes = recvfrom(winSocket, &outBuffer[0], sizeof(outBuffer), 0, reinterpret_cast<sockaddr*>(&from), &fromSize);
-
-        if(receivedBytes == SOCKET_ERROR)
-        {
-            WINSOCK_REPORT_ERROR();
-            return {};
-        }
-
-        if(outFrom)
-        {
-            char buff[25];
-            inet_ntop(AF_INET, &from.sin_addr, &buff[0], sizeof(buff));
-            (*outFrom) = { {buff}, from.sin_port};
-        }
-
-        return {Buffer{&outBuffer[0], receivedBytes}};
+        sockaddr_in windowsSockAddr{};
+        windowsSockAddr.sin_family = GioNetAddressFamily;
+        windowsSockAddr.sin_port = destination->port;
+        in_addr windowsAddr{};
+        inet_pton(GioNetAddressFamily, destination->ip.c_str(), &windowsAddr);
+        windowsSockAddr.sin_addr = windowsAddr;
+        res = sendto(winSocket, buffer.Data(), buffer.Length(), 0, reinterpret_cast<sockaddr*>(&windowsSockAddr), sizeof(windowsSockAddr));
+    }
+    else
+    {
+        assert(winAddrInfo);
+        res = sendto(winSocket, buffer.Data(), buffer.Length(), 0, winAddrInfo->ai_addr, sizeof(sockaddr));
     }
 
-    printf("Unimplemented protocol...\n");
-    return {};
+    if(res == SOCKET_ERROR)
+    {
+        WINSOCK_REPORT_ERROR();
+        return {};
+    }
+    
+    return {res};
+}
+
+std::optional<GioNet::Buffer> GioNet::Socket::Receive()
+{
+    assert(protocol == CommunicationProtocols::TCP);
+    char received[GIONET_BUFFER_MAX];
+    int receivedBytes = recv(winSocket, &received[0], sizeof(received), 0);
+
+    if(receivedBytes == SOCKET_ERROR)
+    {
+        WINSOCK_REPORT_ERROR();
+        return {};
+    }
+
+    return {Buffer{&received[0], receivedBytes}};
+}
+
+std::optional<GioNet::Buffer> GioNet::Socket::ReceiveFrom(NetAddress* outFrom)
+{
+    assert(protocol == CommunicationProtocols::UDP);
+    sockaddr_in from{};
+    int fromSize = sizeof(sockaddr_in);
+
+    char outBuffer[GIONET_BUFFER_MAX];
+    int receivedBytes = recvfrom(winSocket, &outBuffer[0], sizeof(outBuffer), 0, reinterpret_cast<sockaddr*>(&from), &fromSize);
+
+    if(receivedBytes == SOCKET_ERROR)
+    {
+        WINSOCK_REPORT_ERROR();
+        return {};
+    }
+
+    if(outFrom)
+    {
+        char buff[25];
+        inet_ntop(AF_INET, &from.sin_addr, &buff[0], sizeof(buff));
+        (*outFrom) = { {buff}, from.sin_port};
+    }
+
+    return {Buffer{&outBuffer[0], receivedBytes}};
 }
 
 bool GioNet::Socket::Bind()

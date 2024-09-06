@@ -40,6 +40,8 @@ namespace GioNet
         Client(const std::shared_ptr<Socket>& socket);
 
         void RunListenThread();
+
+        virtual std::optional<Buffer> DoReceive() = 0;
         
     private:
         void ListenThreadImpl();

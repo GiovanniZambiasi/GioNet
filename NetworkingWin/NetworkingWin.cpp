@@ -37,7 +37,6 @@ int main(int argC, char* argV[])
         client->Start();
         do
         {
-            client->SayHello();
             std::this_thread::sleep_for(std::chrono::seconds{1});
         } while(client->IsConnected());
     }

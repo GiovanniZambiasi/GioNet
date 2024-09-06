@@ -41,18 +41,20 @@ namespace GioNet
 
         std::string ToString() const;
 
-        int Send(const Buffer& buffer, std::optional<NetAddress> destination = {});
+        std::optional<int> Send(const Buffer& buffer);
 
-        std::optional<Buffer> Receive(NetAddress* outFrom = nullptr);
+        std::optional<int> SendTo(const Buffer& buffer, std::optional<NetAddress> destination = {});
+
+        std::optional<Buffer> Receive();
+
+        std::optional<Buffer> ReceiveFrom(NetAddress* outFrom = nullptr);
     
-        // SERVER
         bool Bind();
 
         bool Listen();
 
         std::shared_ptr<Socket> AcceptConnection();
 
-        //CLIENT
         bool Connect();
 
         void Close();
