@@ -49,7 +49,7 @@ namespace GioNet
 
         bool Listen();
 
-        std::shared_ptr<Socket> Accept();
+        std::shared_ptr<Socket> AcceptConnection();
 
         //CLIENT
         bool Connect();

@@ -97,6 +97,7 @@ int GioNet::Socket::Send(const char* buffer, int len, std::optional<NetAddress> 
             windowsSockAddr.sin_addr = windowsAddr;
             res = sendto(winSocket, buffer, len, 0, reinterpret_cast<sockaddr*>(&windowsSockAddr), sizeof(windowsSockAddr));
         }
+        // For clients communicating with the server (no destination is required)
         else
         {
             assert(winAddrInfo);
@@ -173,7 +174,6 @@ bool GioNet::Socket::Bind()
         return false;
     }
     
-    // addrinfo no longer needed
     FreeAddressInfo();
 
     return true;
@@ -181,6 +181,7 @@ bool GioNet::Socket::Bind()
 
 bool GioNet::Socket::Listen()
 {
+    assert(protocol == CommunicationProtocols::TCP);
     if ( listen( winSocket, SOMAXCONN ) == SOCKET_ERROR ) {
         WINSOCK_REPORT_ERROR();
         Close();
@@ -190,7 +191,7 @@ bool GioNet::Socket::Listen()
     return true;
 }
 
-std::shared_ptr<GioNet::Socket> GioNet::Socket::Accept()
+std::shared_ptr<GioNet::Socket> GioNet::Socket::AcceptConnection()
 {
     assert(protocol == CommunicationProtocols::TCP);
     sockaddr_in addr{};
@@ -214,6 +215,7 @@ std::shared_ptr<GioNet::Socket> GioNet::Socket::Accept()
 
 bool GioNet::Socket::Connect()
 {
+    assert(protocol == CommunicationProtocols::TCP);
     int result = connect( winSocket, winAddrInfo->ai_addr, static_cast<int>(winAddrInfo->ai_addrlen));
     if (result == SOCKET_ERROR)
     {

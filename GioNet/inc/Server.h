@@ -1,10 +1,11 @@
 ﻿#pragma once
+#include <cassert>
 #include <memory>
 #include <shared_mutex>
-#include <thread>
 #include <unordered_map>
 
 #include "Core.h"
+#include "Socket.h"
 
 namespace GioNet
 {
@@ -26,32 +27,37 @@ namespace GioNet
     {
         std::shared_ptr<Socket> listenSocket{};
 
-        std::unordered_map<NetAddress, std::thread> receiveThreads{};
-
         std::vector<Peer> peers{};
 
-        std::thread listenThread{};
-        
-        std::shared_mutex connectionMutex{};
+        std::shared_mutex peersMutex{};
 
     public:
-        Server() = default;
-
-        Server(unsigned short port, CommunicationProtocols protocol);
-
         GIONET_NOCOPY(Server)
         
-        ~Server();
+        virtual ~Server();
         
-        void Start();
+        virtual void Start();
 
-    private:
+        void Stop();
+
+        Socket& GetSocketChecked()
+        {
+            assert(listenSocket && listenSocket->IsValid());
+            return *listenSocket;
+        }
+
+        std::shared_ptr<Socket> GetSocket() { return listenSocket; }
+ 
+    protected:
+        Server(const std::shared_ptr<Socket>& listenSocket);
+
         void AddPeer(const Peer& peer);
 
         void RemovePeer(const Peer& peer);
+        
+        virtual void OnPostPeerAdded(const Peer& peer) { }
 
-        void ConnectionLoop();
+        virtual void OnPrePeerRemoved(const Peer& peer) { }
 
-        void ReceiveLoop(const std::shared_ptr<Socket>& socket);
     };
 }

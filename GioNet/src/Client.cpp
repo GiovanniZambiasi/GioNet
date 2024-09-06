@@ -1,11 +1,15 @@
 ﻿#include "Client.h"
-
 #include <assert.h>
 #include "Socket.h"
 
-GioNet::Client::Client(const NetAddress& address, CommunicationProtocols protocol)
+GioNet::Client::Client(const std::shared_ptr<Socket>& socket)
+    : socket(socket)
 {
-    socket = std::make_shared<Socket>(address, protocol);
+}
+
+void GioNet::Client::RunListenThread()
+{
+    listenThread = std::thread{&Client::ListenThreadImpl, this};
 }
 
 GioNet::Client::~Client()
@@ -21,27 +25,7 @@ void GioNet::Client::SayHello()
 
 void GioNet::Client::Start()
 {
-    switch (socket->GetProtocol())
-    {
-    case CommunicationProtocols::TCP:
-        if(socket->Connect())
-        {
-            printf("Successfully connected to server\n");
-            listenThread = std::thread{&Client::ReceiveLoop, this};
-        }
-        else
-        {
-            printf("Connection failed!\n");
-        }
-        break;
-    case CommunicationProtocols::UDP:
-        printf("Client started receiving datagrams..\n");
-        listenThread = std::thread{&Client::ReceiveLoop, this};
-        break;
-    default:
-        printf("[ERROR]: Unimplemented protocol\n");
-        break;
-    }
+    assert(socket && socket->IsValid());
 }
 
 void GioNet::Client::Stop()
@@ -59,23 +43,21 @@ bool GioNet::Client::IsConnected() const
     return socket->IsValid();
 }
 
-void GioNet::Client::ReceiveLoop()
+void GioNet::Client::ListenThreadImpl()
 {
-    int received;
-    do
+    while (socket && socket->IsValid())
     {
         char buffer[GIONET_DEFAULT_BUFFER];
-        received = socket->Receive(&buffer[0], sizeof(buffer));
-        if(received > 0)
+        int bytesReceived = socket->Receive(&buffer[0], sizeof(buffer));
+
+        if (bytesReceived > 0)
         {
-            printf("Received data from server: '%s'\n", &buffer[0]);
+            // YAY! DATA!
+            printf("Received data from server: %s\n", buffer);
         }
-        else if(!socket->IsValid())
+        else if(bytesReceived == SOCKET_ERROR)
         {
-            break;
+            Stop();
         }
     }
-    while (received != SOCKET_ERROR);
-
-    printf("Ending receive loop because connection was lost\n");
 }

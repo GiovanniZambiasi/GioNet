@@ -1,6 +1,9 @@
 ﻿#pragma once
+#include <cassert>
 #include <memory>
 #include <thread>
+
+#include "Socket.h"
 
 namespace GioNet
 {
@@ -15,22 +18,31 @@ namespace GioNet
         std::thread listenThread{};
         
     public:
-        Client() = default;
-
-        Client(const NetAddress& address, CommunicationProtocols protocol);
-        
-        ~Client();
+        virtual ~Client();
         
         void SayHello();
         
-        void Start();
+        virtual void Start();
 
         void Stop();
         
         bool IsConnected() const;
 
+        Socket& GetSocketChecked()
+        {
+            assert(socket && socket->IsValid());
+            return *socket;
+        }
+
+        std::shared_ptr<Socket> GetSocket(){ return socket;}
+        
+    protected:
+        Client(const std::shared_ptr<Socket>& socket);
+
+        void RunListenThread();
+        
     private:
-        void ReceiveLoop();
+        void ListenThreadImpl();
         
     };    
 }
