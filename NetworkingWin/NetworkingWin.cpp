@@ -4,7 +4,7 @@
 #include "GioNet.h"
 
 std::unordered_map<std::string, std::string> args{};
-GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::UDP;
+GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
 void ParseArgs(int argC, char* argV[]);
 
@@ -34,18 +34,17 @@ int main(int argC, char* argV[])
         
         auto& sys = GioNet::NetSystem::Get();
         std::shared_ptr<GioNet::Client> client = sys.StartClient(serverIpLoc->second.c_str(), GIONET_DEFAULT_PORT, protocol);
-        client->SayHello();
-        while (true)
+        do
         {
-            
-        }
+            client->SayHello();
+            std::this_thread::sleep_for(std::chrono::seconds{1});
+        } while(client->IsConnected());
     }
     else
     {
         printf("[ERROR] No execution mode has been specified\n");
         return 1;
     }
-
 
 }
 

@@ -50,5 +50,16 @@ namespace GioNet
         bool IsServer() const { return ip.empty(); }
         
         bool operator==(const NetAddress& address) const = default;
+        
+        std::string ToString() const;
     };
 }
+
+template<>
+struct std::hash<GioNet::NetAddress>
+{
+    std::size_t operator()(const GioNet::NetAddress& address) const noexcept
+    {
+        return std::hash<std::string>()(address.ToString()) ^ std::hash<unsigned short>()(address.port);
+    }
+};

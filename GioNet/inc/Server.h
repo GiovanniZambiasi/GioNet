@@ -16,13 +16,19 @@ namespace GioNet
         NetAddress address{};
         
         std::shared_ptr<Socket> connection{};
+        
+        std::string ToString() const;
+
+        bool operator==(const Peer& other) const = default;
     };
 
     class Server
     {
         std::shared_ptr<Socket> listenSocket{};
 
-        std::unordered_map<std::shared_ptr<Socket>, std::thread> receiveThreads{};
+        std::unordered_map<NetAddress, std::thread> receiveThreads{};
+
+        std::vector<Peer> peers{};
 
         std::thread listenThread{};
         
@@ -32,20 +38,20 @@ namespace GioNet
         Server() = default;
 
         Server(unsigned short port, CommunicationProtocols protocol);
+
+        GIONET_NOCOPY(Server)
         
         ~Server();
         
         void Start();
 
-        void SendToPeer(const std::shared_ptr<Socket>& peer, const char* buffer, int len);
-
     private:
-        void AddPeer(const std::shared_ptr<Socket>& peer);
+        void AddPeer(const Peer& peer);
 
-        void RemovePeer(const std::shared_ptr<Socket>& peer);
+        void RemovePeer(const Peer& peer);
 
         void ConnectionLoop();
 
-        void ReceiveLoop(const std::shared_ptr<Socket>& peer);
+        void ReceiveLoop(const std::shared_ptr<Socket>& socket);
     };
 }

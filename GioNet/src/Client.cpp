@@ -54,6 +54,11 @@ void GioNet::Client::Stop()
     listenThread.detach();
 }
 
+bool GioNet::Client::IsConnected() const
+{
+    return socket->IsValid();
+}
+
 void GioNet::Client::ReceiveLoop()
 {
     int received;

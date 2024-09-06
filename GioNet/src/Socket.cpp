@@ -118,7 +118,7 @@ int GioNet::Socket::Send(const char* buffer, int len, std::optional<NetAddress> 
 
 int GioNet::Socket::Receive(char* buffer, int len, NetAddress* outFrom)
 {
-    int result{};
+    int result;
     
     switch (protocol)
     {
@@ -192,7 +192,7 @@ bool GioNet::Socket::Listen()
 
 std::shared_ptr<GioNet::Socket> GioNet::Socket::Accept()
 {
-    // TODO - Only do this if TCP
+    assert(protocol == CommunicationProtocols::TCP);
     sockaddr_in addr{};
     ZeroMemory(&addr, sizeof(sockaddr_in));
     int size = sizeof(addr);

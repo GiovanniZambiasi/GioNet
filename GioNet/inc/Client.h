@@ -26,6 +26,8 @@ namespace GioNet
         void Start();
 
         void Stop();
+        
+        bool IsConnected() const;
 
     private:
         void ReceiveLoop();
