@@ -40,12 +40,18 @@ void GioNet::ServerUDP::RunListenThread()
 
         if(received)
         {
-            if(!HasPeer(source))
+            if(const Peer* peer = TryGetPeer(source))
             {
-                AddPeer(Peer{source, nullptr});
+                InvokeDataReceived(*peer, std::move(*received));
+                received.reset();
             }
-            
-            GIONET_LOG("Received data: %s\n", received->Data());
+            else
+            {
+                Peer newPeer{source, socket};
+                AddPeer(newPeer);
+                InvokeDataReceived(newPeer, std::move(*received));
+                received.reset();
+            }
         }
         else
         {

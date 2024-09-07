@@ -23,6 +23,19 @@ bool GioNet::Server::HasPeer(const NetAddress& address) const
     return peers.contains(address);
 }
 
+const GioNet::Peer* GioNet::Server::TryGetPeer(const NetAddress& address) const
+{
+    std::shared_lock _{peersMutex};
+    auto peer = peers.find(address);
+
+    if(peer != peers.end())
+    {
+        return &peer->second;
+    }
+    
+    return nullptr;
+}
+
 GioNet::Server::Server(const std::shared_ptr<Socket>& listenSocket)
     : listenSocket(listenSocket)
 {
@@ -76,6 +89,11 @@ void GioNet::Server::Stop()
     peers.clear();
 }
 
+void GioNet::Server::BindDataReceived(DataReceivedDelegate&& delegate)
+{
+    dataReceived = std::move(delegate);
+}
+
 void GioNet::Server::AddPeer(const Peer& peer)
 {
     std::unique_lock _{peersMutex};
@@ -106,4 +124,10 @@ void GioNet::Server::RemovePeer(const Peer& peer)
     {
         GIONET_LOG("[ERROR]: Tried to remove peer not in connections list: '%s'\n", peer.ToString().c_str());
     }
+}
+
+void GioNet::Server::InvokeDataReceived(const Peer& peer, Buffer&& buffer)
+{
+    if(dataReceived)
+        dataReceived(peer, std::move(buffer));
 }

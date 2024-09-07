@@ -14,9 +14,15 @@ namespace GioNet
 
     class Client
     {
+    public:
+        using DataReceivedDelegate = std::function<void(Buffer&&)>;
+        
+    private:
         std::shared_ptr<Socket> socket{};
 
         std::jthread listenThread{};
+
+        DataReceivedDelegate dataReceived{};
         
     public:
         virtual ~Client();
@@ -35,6 +41,8 @@ namespace GioNet
             return *socket;
         }
 
+        void BindDataReceived(DataReceivedDelegate&& delegate);
+
         std::shared_ptr<Socket> GetSocket(){ return socket;}
         
     protected:
@@ -43,6 +51,8 @@ namespace GioNet
         void RunListenThread();
 
         virtual std::optional<Buffer> DoReceive() = 0;
+
+        void InvokeDataReceived(Buffer&& buffer);
         
     private:
         void ListenThreadImpl();

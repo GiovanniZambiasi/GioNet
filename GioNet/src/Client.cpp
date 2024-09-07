@@ -37,6 +37,17 @@ bool GioNet::Client::IsConnected() const
     return socket->IsValid();
 }
 
+void GioNet::Client::BindDataReceived(DataReceivedDelegate&& delegate)
+{
+    dataReceived = std::move(delegate);
+}
+
+void GioNet::Client::InvokeDataReceived(Buffer&& buffer)
+{
+    if(dataReceived)
+        dataReceived(std::move(buffer));
+}
+
 void GioNet::Client::ListenThreadImpl()
 {
     while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
@@ -45,8 +56,8 @@ void GioNet::Client::ListenThreadImpl()
 
         if (received)
         {
-            // YAY! DATA!
-            GIONET_LOG("Received data from server: %s\n", received->Data());
+            InvokeDataReceived(std::move(*received));
+            received.reset();
         }
         else
         {

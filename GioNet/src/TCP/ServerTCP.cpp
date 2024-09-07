@@ -84,7 +84,7 @@ void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer, std::stop_toke
 
         if(received)
         {
-            GIONET_LOG("Data received from peer: %s\n", received->Data());
+            InvokeDataReceived(peer, std::move(*received));
         }
         else
         {
