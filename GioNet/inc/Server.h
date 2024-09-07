@@ -30,7 +30,7 @@ namespace GioNet
 
         std::unordered_map<NetAddress, Peer> peers{};
 
-        std::shared_mutex peersMutex{};
+        mutable std::shared_mutex peersMutex{};
 
     public:
         GIONET_NOCOPY(Server)
@@ -39,11 +39,11 @@ namespace GioNet
         
         virtual void Start();
 
+        virtual void Stop();
+        
         void Broadcast(const Buffer& buffer);
 
         void Send(const Buffer& buffer, const Peer& peer);
-
-        void Stop();
 
         Socket& GetSocketChecked()
         {
@@ -53,9 +53,13 @@ namespace GioNet
 
         std::shared_ptr<Socket> GetSocket() { return listenSocket; }
 
-        const std::unordered_map<NetAddress, Peer>& GetPeers() const { return peers; }
+        /**
+         * @param outPeers Populates input with list of peers at the time of calling the method. Doesn't return the actual
+         * dict for thread safety.
+         */
+        void GetPeers(std::unordered_map<NetAddress, Peer>& outPeers) const;
 
-        bool HasPeer(const NetAddress& address) const { return peers.contains(address); }
+        bool HasPeer(const NetAddress& address) const;
         
         bool IsRunning() const { return listenSocket && listenSocket->IsValid(); }
 

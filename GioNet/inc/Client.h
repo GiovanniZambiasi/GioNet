@@ -16,7 +16,7 @@ namespace GioNet
     {
         std::shared_ptr<Socket> socket{};
 
-        std::thread listenThread{};
+        std::jthread listenThread{};
         
     public:
         virtual ~Client();

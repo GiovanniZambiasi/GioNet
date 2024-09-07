@@ -10,7 +10,7 @@ GioNet::Client::Client(const std::shared_ptr<Socket>& socket)
 
 void GioNet::Client::RunListenThread()
 {
-    listenThread = std::thread{&Client::ListenThreadImpl, this};
+    listenThread = std::jthread{&Client::ListenThreadImpl, this};
 }
 
 GioNet::Client::~Client()
@@ -30,7 +30,7 @@ void GioNet::Client::Stop()
         socket->Close();
     }
 
-    listenThread.detach();
+    listenThread.request_stop();
 }
 
 bool GioNet::Client::IsConnected() const
@@ -40,7 +40,7 @@ bool GioNet::Client::IsConnected() const
 
 void GioNet::Client::ListenThreadImpl()
 {
-    while (socket && socket->IsValid())
+    while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
     {
         std::optional<Buffer> received = DoReceive();
 

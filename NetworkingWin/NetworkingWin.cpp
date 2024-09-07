@@ -4,7 +4,7 @@
 #include "GioNet.h"
 
 std::unordered_map<std::string, std::string> args{};
-GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::UDP;
+GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
 void ParseArgs(int argC, char* argV[]);
 
@@ -18,7 +18,7 @@ int main(int argC, char* argV[])
         auto& sys = GioNet::NetSystem::Get();
         std::shared_ptr<GioNet::Server> server = sys.CreateServer(GIONET_DEFAULT_PORT, protocol);
         server->Start();
-        while(server->IsRunning())
+        while(server && server->IsRunning())
         {
             server->Broadcast({"Pong!"});
             std::this_thread::sleep_for(std::chrono::seconds{1});
@@ -36,7 +36,7 @@ int main(int argC, char* argV[])
         auto& sys = GioNet::NetSystem::Get();
         std::shared_ptr<GioNet::Client> client = sys.CreateClient(serverIpLoc->second.c_str(), GIONET_DEFAULT_PORT, protocol);
         client->Start();
-        while(client->IsConnected())
+        while(client && client->IsConnected())
         {
             client->Send({"Ping!"});
             std::this_thread::sleep_for(std::chrono::seconds{1});

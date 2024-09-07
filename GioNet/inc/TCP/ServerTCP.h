@@ -5,9 +5,9 @@ namespace GioNet
 {
     class ServerTCP : public Server
     {
-        std::thread connectionThread{};
+        std::jthread connectionThread{};
 
-        std::unordered_map<NetAddress, std::thread> receiveThreads{};
+        std::unordered_map<NetAddress, std::jthread> receiveThreads{};
         
     public:
         ServerTCP(unsigned short port);
@@ -16,6 +16,8 @@ namespace GioNet
         
         void Start() override;
 
+        void Stop() override;
+
     private:
         void RunConnectionThread();
 
@@ -23,7 +25,7 @@ namespace GioNet
 
         void OnPrePeerRemoved(const Peer& peer) override;
 
-        void RunReceiveThreadForPeer(const Peer& peer);
+        void RunReceiveThreadForPeer(const Peer& peer, std::stop_token stop);
 
         std::optional<int> DoSend(const Buffer& buffer, const Peer& peer) override;
     };

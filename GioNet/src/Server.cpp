@@ -8,6 +8,21 @@ std::string GioNet::Peer::ToString() const
     return connection ? connection->ToString() : address.ToString();
 }
 
+void GioNet::Server::GetPeers(std::unordered_map<NetAddress, Peer>& outPeers) const
+{
+    std::shared_lock _{peersMutex};
+    for (const auto& peer : peers)
+    {
+        outPeers[peer.first] = peer.second;
+    }
+}
+
+bool GioNet::Server::HasPeer(const NetAddress& address) const
+{
+    std::shared_lock _{peersMutex};
+    return peers.contains(address);
+}
+
 GioNet::Server::Server(const std::shared_ptr<Socket>& listenSocket)
     : listenSocket(listenSocket)
 {
@@ -17,7 +32,7 @@ GioNet::Server::Server(const std::shared_ptr<Socket>& listenSocket)
 
 GioNet::Server::~Server()
 {
-    Stop();
+    Server::Stop();
 }
 
 void GioNet::Server::Start()
@@ -27,6 +42,7 @@ void GioNet::Server::Start()
 
 void GioNet::Server::Broadcast(const Buffer& buffer)
 {
+    std::shared_lock _{peersMutex};
     const auto& peerAddresses = std::views::keys(peers);
 
     for(const NetAddress& address : peerAddresses)
@@ -52,7 +68,12 @@ void GioNet::Server::Send(const Buffer& buffer, const Peer& peer)
 
 void GioNet::Server::Stop()
 {
-    listenSocket->Close();
+    if(listenSocket->IsValid())
+    {
+        listenSocket->Close();
+    }
+    
+    peers.clear();
 }
 
 void GioNet::Server::AddPeer(const Peer& peer)

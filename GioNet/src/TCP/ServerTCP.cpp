@@ -11,14 +11,7 @@ GioNet::ServerTCP::ServerTCP(unsigned short port)
 
 GioNet::ServerTCP::~ServerTCP()
 {
-    connectionThread.detach();
-
-    for (auto& thread : receiveThreads | std::views::values)
-    {
-        thread.detach();
-    }
-
-    receiveThreads.clear();
+    ServerTCP::Stop();
 }
 
 void GioNet::ServerTCP::Start()
@@ -28,21 +21,29 @@ void GioNet::ServerTCP::Start()
     Socket& socket = GetSocketChecked();
     if(socket.Listen())
     {
-        connectionThread = std::thread{&ServerTCP::RunConnectionThread, this};
+        connectionThread = std::jthread{&ServerTCP::RunConnectionThread, this};
     }
+}
+
+void GioNet::ServerTCP::Stop()
+{
+    Server::Stop();
+
+    connectionThread.request_stop();
+    receiveThreads.clear();
 }
 
 void GioNet::ServerTCP::RunConnectionThread()
 {
     std::shared_ptr<Socket> socket = GetSocket();
     
-    while (socket && socket->IsValid())
+    while (socket && socket->IsValid() && !connectionThread.get_stop_token().stop_requested())
     {
         printf("Server listening for next connection...\n");
 
         std::shared_ptr<Socket> client = socket->AcceptConnection();
         
-        if(client->IsValid())
+        if(client && client->IsValid())
         {
             AddPeer({client->GetAddress(), client});
         }
@@ -55,7 +56,10 @@ void GioNet::ServerTCP::OnPostPeerAdded(const Peer& peer)
 {
     Server::OnPostPeerAdded(peer);
     
-    receiveThreads[peer.address] = std::thread{&ServerTCP::RunReceiveThreadForPeer, this, peer};
+    receiveThreads[peer.address] = std::jthread{[this, peer](std::stop_token stop)
+    {
+        RunReceiveThreadForPeer(peer, stop);
+    }};
     peer.connection->Send({"Greetings from server!"});
 }
 
@@ -71,10 +75,10 @@ void GioNet::ServerTCP::OnPrePeerRemoved(const Peer& peer)
     }
 }
 
-void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer)
+void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer, std::stop_token stop)
 {
     std::shared_ptr<Socket> socket = peer.connection;
-    while (socket && socket->IsValid())
+    while (socket && socket->IsValid() && !stop.stop_requested())
     {
         std::optional<Buffer> received = socket->Receive();
 

@@ -10,20 +10,30 @@ GioNet::ServerUDP::ServerUDP(unsigned short port)
 
 GioNet::ServerUDP::~ServerUDP()
 {
-    listenThread.detach();
+    ServerUDP::Stop();
 }
 
 void GioNet::ServerUDP::Start()
 {
     Server::Start();
     printf("Starting UDP server...\n");
-    listenThread = std::thread{&ServerUDP::RunListenThread, this};
+    listenThread = std::jthread{&ServerUDP::RunListenThread, this};
+}
+
+void GioNet::ServerUDP::Stop()
+{
+    Server::Stop();
+
+    if(listenThread.joinable())
+    {
+        listenThread.request_stop();
+    }
 }
 
 void GioNet::ServerUDP::RunListenThread()
 {
     std::shared_ptr<Socket> socket = GetSocket();
-    while (socket && socket->IsValid())
+    while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
     {
         NetAddress source{};
         std::optional<Buffer> received = socket->ReceiveFrom(&source);

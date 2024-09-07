@@ -5,7 +5,7 @@ namespace GioNet
 {
     class ServerUDP : public Server
     {
-        std::thread listenThread{};
+        std::jthread listenThread{};
         
     public:
         ServerUDP(unsigned short port);
@@ -14,6 +14,8 @@ namespace GioNet
 
     private:
         void Start() override;
+
+        void Stop() override;
 
         void RunListenThread();
         
