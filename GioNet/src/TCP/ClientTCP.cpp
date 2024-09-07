@@ -12,17 +12,19 @@ GioNet::ClientTCP::ClientTCP(const NetAddress& address)
 void GioNet::ClientTCP::Start()
 {
     Client::Start();
-    printf("Starting TCP client...\n");
 
-    Socket& socket = GetSocketChecked();
-    if(socket.Connect())
+    GIONET_LOG("Starting TCP client...\n");
+    
+    std::shared_ptr<Socket> socket = GetSocket();
+    if(socket && socket->IsValid() && socket->Connect())
     {
-        printf("Successfully connected to server!\n");
+        GIONET_LOG("Successfully connected to server!\n");
         RunListenThread();
     }
     else
     {
-        printf("Connection failed.\n");
+        GIONET_LOG("Connection failed.\n");
+        Stop();
     }
 }
 

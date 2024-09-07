@@ -17,7 +17,7 @@ GioNet::ServerTCP::~ServerTCP()
 void GioNet::ServerTCP::Start()
 {
     Server::Start();
-    printf("Starting TCP server...\n");
+    GIONET_LOG("Starting TCP server...\n");
     Socket& socket = GetSocketChecked();
     if(socket.Listen())
     {
@@ -39,7 +39,7 @@ void GioNet::ServerTCP::RunConnectionThread()
     
     while (socket && socket->IsValid() && !connectionThread.get_stop_token().stop_requested())
     {
-        printf("Server listening for next connection...\n");
+        GIONET_LOG("Server listening for next connection...\n");
 
         std::shared_ptr<Socket> client = socket->AcceptConnection();
         
@@ -49,7 +49,7 @@ void GioNet::ServerTCP::RunConnectionThread()
         }
     }
 
-    printf("Connection loop finished because connection was lost\n");
+    GIONET_LOG("Connection loop finished because connection was lost\n");
 }
 
 void GioNet::ServerTCP::OnPostPeerAdded(const Peer& peer)
@@ -84,7 +84,7 @@ void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer, std::stop_toke
 
         if(received)
         {
-            printf("Data received from peer: %s\n", received->Data());
+            GIONET_LOG("Data received from peer: %s\n", received->Data());
         }
         else
         {

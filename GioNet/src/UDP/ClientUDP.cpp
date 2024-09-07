@@ -12,8 +12,18 @@ GioNet::ClientUDP::ClientUDP(const NetAddress& address)
 void GioNet::ClientUDP::Start()
 {
     Client::Start();
-    printf("Starting UDP client...\n");
-    RunListenThread();
+
+    std::shared_ptr<Socket> socket = GetSocket();
+    if(socket && socket->IsValid())
+    {
+        GIONET_LOG("Starting UDP client...\n");
+        RunListenThread();
+    }
+    else
+    {
+        GIONET_LOG("Connection failed...\n");
+        Stop();
+    }
 }
 
 std::optional<GioNet::Buffer> GioNet::ClientUDP::DoReceive()

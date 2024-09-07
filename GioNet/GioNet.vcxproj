@@ -22,6 +22,7 @@
     <ClCompile Include="src\Buffer.cpp" />
     <ClCompile Include="src\Client.cpp" />
     <ClCompile Include="src\Core.cpp" />
+    <ClCompile Include="src\Logger.cpp" />
     <ClCompile Include="src\NetSystem.cpp" />
     <ClCompile Include="src\Server.cpp" />
     <ClCompile Include="src\Socket.cpp" />
@@ -35,6 +36,7 @@
     <ClInclude Include="inc\Client.h" />
     <ClInclude Include="inc\GioNet.h" />
     <ClInclude Include="inc\Core.h" />
+    <ClInclude Include="inc\Logger.h" />
     <ClInclude Include="inc\NetSystem.h" />
     <ClInclude Include="inc\Server.h" />
     <ClInclude Include="inc\Socket.h" />

@@ -27,7 +27,7 @@ GioNet::NetSystem::NetSystem()
 
     if(errorCode != 0)
     {
-        printf("[ERROR]: Winsock initialization with result %i\n", errorCode);
+        GIONET_LOG("[ERROR]: Winsock initialization with result %i\n", errorCode);
     }
 }
 

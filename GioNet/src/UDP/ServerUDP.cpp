@@ -16,7 +16,7 @@ GioNet::ServerUDP::~ServerUDP()
 void GioNet::ServerUDP::Start()
 {
     Server::Start();
-    printf("Starting UDP server...\n");
+    GIONET_LOG("Starting UDP server...\n");
     listenThread = std::jthread{&ServerUDP::RunListenThread, this};
 }
 
@@ -45,7 +45,7 @@ void GioNet::ServerUDP::RunListenThread()
                 AddPeer(Peer{source, nullptr});
             }
             
-            printf("Received data: %s\n", received->Data());
+            GIONET_LOG("Received data: %s\n", received->Data());
         }
         else
         {

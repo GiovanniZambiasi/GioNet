@@ -82,13 +82,13 @@ void GioNet::Server::AddPeer(const Peer& peer)
     
     if(peers.contains(peer.address))
     {
-        printf("[ERROR]: Peer with address %s already exists.\n", peer.address.ToString().c_str());
+        GIONET_LOG("[ERROR]: Peer with address %s already exists.\n", peer.address.ToString().c_str());
         return;
     }
     
     peers[peer.address] = peer;
     OnPostPeerAdded(peer);
-    printf("Successfully connected to peer %s\n", peer.ToString().c_str());
+    GIONET_LOG("Successfully connected to peer %s\n", peer.ToString().c_str());
 }
 
 void GioNet::Server::RemovePeer(const Peer& peer)
@@ -98,12 +98,12 @@ void GioNet::Server::RemovePeer(const Peer& peer)
     auto peerEntry = peers.find(peer.address); 
     if(peerEntry != peers.end())
     {
-        printf("Disconnecting peer %s\n", peer.ToString().c_str());
+        GIONET_LOG("Disconnecting peer %s\n", peer.ToString().c_str());
         OnPrePeerRemoved(peer);
         peers.erase(peerEntry);
     }
     else
     {
-        printf("[ERROR]: Tried to remove peer not in connections list: '%s'\n", peer.ToString().c_str());
+        GIONET_LOG("[ERROR]: Tried to remove peer not in connections list: '%s'\n", peer.ToString().c_str());
     }
 }

@@ -20,7 +20,6 @@ GioNet::Client::~Client()
 
 void GioNet::Client::Start()
 {
-    assert(socket && socket->IsValid());
 }
 
 void GioNet::Client::Stop()
@@ -47,7 +46,7 @@ void GioNet::Client::ListenThreadImpl()
         if (received)
         {
             // YAY! DATA!
-            printf("Received data from server: %s\n", received->Data());
+            GIONET_LOG("Received data from server: %s\n", received->Data());
         }
         else
         {
