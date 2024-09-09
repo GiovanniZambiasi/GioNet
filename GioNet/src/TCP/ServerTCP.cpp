@@ -60,7 +60,6 @@ void GioNet::ServerTCP::OnPostPeerAdded(const Peer& peer)
     {
         RunReceiveThreadForPeer(peer, stop);
     }};
-    peer.connection->Send({"Greetings from server!"});
 }
 
 void GioNet::ServerTCP::OnPrePeerRemoved(const Peer& peer)

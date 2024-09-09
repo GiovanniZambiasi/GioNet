@@ -29,6 +29,8 @@ namespace GioNet
     public:
         using DataReceivedDelegate = std::function<void(const Peer&, Buffer&&)>;
         
+        using PeerDelegate = std::function<void(const Peer&)>;
+        
     private:
         std::shared_ptr<Socket> listenSocket{};
 
@@ -36,7 +38,11 @@ namespace GioNet
 
         mutable std::shared_mutex peersMutex{};
 
-        DataReceivedDelegate dataReceived{};
+        DataReceivedDelegate dataReceivedDelegate{};
+
+        PeerDelegate peerConnectedDelegate{};
+        
+        PeerDelegate peerDisconnectedDelegate{};
         
     public:
         GIONET_NOCOPY(Server)
@@ -48,6 +54,10 @@ namespace GioNet
         virtual void Stop();
 
         void BindDataReceived(DataReceivedDelegate&& delegate);
+        
+        void BindPeerConnected(PeerDelegate&& delegate);
+        
+        void BindPeerDisconnected(PeerDelegate&& delegate);
         
         void Broadcast(const Buffer& buffer);
 

@@ -55,16 +55,15 @@ void GioNet::Server::Start()
 
 void GioNet::Server::Broadcast(const Buffer& buffer)
 {
-    std::shared_lock _{peersMutex};
     const auto& peerAddresses = std::views::keys(peers);
 
     for(const NetAddress& address : peerAddresses)
     {
-        auto peer = peers.find(address);
+        const Peer* peer = TryGetPeer(address);
 
-        if(peer != peers.end())
+        if(peer != nullptr)
         {
-            Send(buffer, peer->second);
+            Send(buffer, *peer);
         }
     }
 }
@@ -91,34 +90,56 @@ void GioNet::Server::Stop()
 
 void GioNet::Server::BindDataReceived(DataReceivedDelegate&& delegate)
 {
-    dataReceived = std::move(delegate);
+    dataReceivedDelegate = std::move(delegate);
+}
+
+void GioNet::Server::BindPeerConnected(PeerDelegate&& delegate)
+{
+    peerConnectedDelegate = std::move(delegate);
+}
+
+void GioNet::Server::BindPeerDisconnected(PeerDelegate&& delegate)
+{
+    peerDisconnectedDelegate = std::move(delegate);
 }
 
 void GioNet::Server::AddPeer(const Peer& peer)
 {
-    std::unique_lock _{peersMutex};
-    
-    if(peers.contains(peer.address))
     {
-        GIONET_LOG("[ERROR]: Peer with address %s already exists.\n", peer.address.ToString().c_str());
-        return;
+        std::unique_lock _{peersMutex};
+    
+        if(peers.contains(peer.address))
+        {
+            GIONET_LOG("[ERROR]: Peer with address %s already exists.\n", peer.address.ToString().c_str());
+            return;
+        }
+    
+        peers[peer.address] = peer;
     }
     
-    peers[peer.address] = peer;
     OnPostPeerAdded(peer);
+
+    if(peerConnectedDelegate)
+        peerConnectedDelegate(peer);
+    
     GIONET_LOG("Successfully connected to peer %s\n", peer.ToString().c_str());
 }
 
 void GioNet::Server::RemovePeer(const Peer& peer)
 {
-    std::unique_lock _{peersMutex};
-
     auto peerEntry = peers.find(peer.address); 
     if(peerEntry != peers.end())
     {
         GIONET_LOG("Disconnecting peer %s\n", peer.ToString().c_str());
         OnPrePeerRemoved(peer);
-        peers.erase(peerEntry);
+        
+        {
+            std::unique_lock _{peersMutex};
+            peers.erase(peerEntry);
+        }
+
+        if(peerDisconnectedDelegate)
+            peerDisconnectedDelegate(peer);
     }
     else
     {
@@ -128,6 +149,6 @@ void GioNet::Server::RemovePeer(const Peer& peer)
 
 void GioNet::Server::InvokeDataReceived(const Peer& peer, Buffer&& buffer)
 {
-    if(dataReceived)
-        dataReceived(peer, std::move(buffer));
+    if(dataReceivedDelegate)
+        dataReceivedDelegate(peer, std::move(buffer));
 }
