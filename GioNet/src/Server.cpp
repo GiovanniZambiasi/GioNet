@@ -8,12 +8,12 @@ std::string GioNet::Peer::ToString() const
     return connection ? connection->ToString() : address.ToString();
 }
 
-void GioNet::Server::GetPeers(std::unordered_map<NetAddress, Peer>& outPeers) const
+void GioNet::Server::GetPeers(std::vector<Peer>& outPeers) const
 {
     std::shared_lock _{peersMutex};
     for (const auto& peer : peers)
     {
-        outPeers[peer.first] = peer.second;
+        outPeers.push_back(peer.second);
     }
 }
 

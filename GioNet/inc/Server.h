@@ -75,7 +75,7 @@ namespace GioNet
          * @param outPeers Populates input with list of peers at the time of calling the method. Doesn't return the actual
          * dict for thread safety.
          */
-        void GetPeers(std::unordered_map<NetAddress, Peer>& outPeers) const;
+        void GetPeers(std::vector<Peer>& outPeers) const;
 
         bool HasPeer(const NetAddress& address) const;
 

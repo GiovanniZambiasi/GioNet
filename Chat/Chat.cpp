@@ -135,6 +135,14 @@ public:
     void DataReceived(const GioNet::Peer& peer, GioNet::Buffer&& buff)
     {
         PrintMessage(buff.Data());
+        
+        std::vector<GioNet::Peer> peers{};
+        sv->GetPeers(peers);
+        for (const GioNet::Peer & entry : peers)
+        {
+            if(entry != peer)
+                sv->Send(buff, entry);
+        }
     }
 
     void PeerConnected(const GioNet::Peer& peer)
