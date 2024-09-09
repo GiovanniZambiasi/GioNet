@@ -197,6 +197,7 @@ std::shared_ptr<GioNet::Socket> GioNet::Socket::AcceptConnection()
     inet_ntop(addr.sin_family, addr.sin_zero, &buff[0], sizeof(buff));
 
     std::shared_ptr<Socket> connectionSocket = std::make_shared<Socket>();
+    connectionSocket->address = {{buff}, addr.sin_port};
     connectionSocket->winSocket = clientSocket;
     return connectionSocket;
 }
@@ -207,7 +208,7 @@ bool GioNet::Socket::Connect()
     int result = connect( winSocket, winAddrInfo->ai_addr, static_cast<int>(winAddrInfo->ai_addrlen));
     if (result == SOCKET_ERROR)
     {
-        WINSOCK_REPORT_ERROR();
+        WINSOCK_REPORT_ERROR()
         return false;
     }
 

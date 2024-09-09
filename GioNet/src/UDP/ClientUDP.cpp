@@ -17,6 +17,8 @@ void GioNet::ClientUDP::Start()
     if(socket && socket->IsValid())
     {
         GIONET_LOG("Starting UDP client...\n");
+        // UDP Client needs to initiate communication before attempting to listen from socket
+        Send({"Greetings!"});
         RunListenThread();
     }
     else
