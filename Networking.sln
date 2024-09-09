@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetworkingWin", "Networking
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GioNet", "GioNet\GioNet.vcxproj", "{96030668-0EA8-4048-AFFB-0FF9D61E72CF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Chat", "Chat\Chat.vcxproj", "{6414AB8B-0270-48C4-AE47-53C07345E33C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -31,6 +33,14 @@ Global
 		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Release|Win32.Build.0 = Release|Win32
 		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Release|x64.ActiveCfg = Release|x64
 		{96030668-0EA8-4048-AFFB-0FF9D61E72CF}.Release|x64.Build.0 = Release|x64
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Debug|Win32.Build.0 = Debug|Win32
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Debug|x64.ActiveCfg = Debug|x64
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Debug|x64.Build.0 = Debug|x64
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Release|Win32.ActiveCfg = Release|Win32
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Release|Win32.Build.0 = Release|Win32
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Release|x64.ActiveCfg = Release|x64
+		{6414AB8B-0270-48C4-AE47-53C07345E33C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
