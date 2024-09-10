@@ -5,9 +5,9 @@
 
 
 std::unordered_map<std::string, std::string> args{};
-GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::UDP;
+GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
-constexpr int BenchmarkCount{1000000};
+constexpr int BenchmarkCount{100000};
 
 void ParseArgs(int argC, char* argV[]);
 
@@ -33,7 +33,7 @@ void RunServer()
     while(server && server->IsRunning() && count < BenchmarkCount)
     {
         // server->Broadcast({"Pong!"});
-        // std::this_thread::sleep_for(std::chrono::seconds{1});
+        std::this_thread::sleep_for(std::chrono::seconds{1});
     }
 
     std::chrono::time_point end{std::chrono::system_clock::now()};
