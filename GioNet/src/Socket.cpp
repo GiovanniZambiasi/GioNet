@@ -12,7 +12,7 @@ namespace
 }
 
 GioNet::Socket::Socket(const NetAddress& address, CommunicationProtocols protocol)
-    : address(address), protocol(protocol)
+    : address(address), communicationProtocol(protocol)
 {
     addrinfo info{};
     ZeroMemory(&info, sizeof(addrinfo));
@@ -69,12 +69,13 @@ std::string GioNet::Socket::ToString() const
 
 std::optional<int> GioNet::Socket::Send(const Buffer& buffer)
 {
-    assert(protocol == CommunicationProtocols::TCP);
+    assert(communicationProtocol == CommunicationProtocols::TCP);
     int res = send(winSocket, buffer.Data(), buffer.Length(), 0);
 
     if(res == SOCKET_ERROR)
     {
         WINSOCK_REPORT_ERROR();
+        Close();
         return {};
     }
 
@@ -83,7 +84,7 @@ std::optional<int> GioNet::Socket::Send(const Buffer& buffer)
 
 std::optional<int> GioNet::Socket::SendTo(const Buffer& buffer, std::optional<NetAddress> destination)
 {
-    assert(protocol == CommunicationProtocols::UDP);
+    assert(communicationProtocol == CommunicationProtocols::UDP);
     int res{};
     
     if(destination.has_value())
@@ -105,6 +106,7 @@ std::optional<int> GioNet::Socket::SendTo(const Buffer& buffer, std::optional<Ne
     if(res == SOCKET_ERROR)
     {
         WINSOCK_REPORT_ERROR();
+        Close();
         return {};
     }
     
@@ -113,13 +115,14 @@ std::optional<int> GioNet::Socket::SendTo(const Buffer& buffer, std::optional<Ne
 
 std::optional<GioNet::Buffer> GioNet::Socket::Receive()
 {
-    assert(protocol == CommunicationProtocols::TCP);
+    assert(communicationProtocol == CommunicationProtocols::TCP);
     char received[GIONET_BUFFER_MAX];
     int receivedBytes = recv(winSocket, &received[0], sizeof(received), 0);
 
     if(receivedBytes == SOCKET_ERROR)
     {
         WINSOCK_REPORT_ERROR();
+        Close();
         return {};
     }
 
@@ -128,7 +131,7 @@ std::optional<GioNet::Buffer> GioNet::Socket::Receive()
 
 std::optional<GioNet::Buffer> GioNet::Socket::ReceiveFrom(NetAddress* outFrom)
 {
-    assert(protocol == CommunicationProtocols::UDP);
+    assert(communicationProtocol == CommunicationProtocols::UDP);
     sockaddr_in from{};
     int fromSize = sizeof(sockaddr_in);
 
@@ -138,6 +141,7 @@ std::optional<GioNet::Buffer> GioNet::Socket::ReceiveFrom(NetAddress* outFrom)
     if(receivedBytes == SOCKET_ERROR)
     {
         WINSOCK_REPORT_ERROR();
+        Close();
         return {};
     }
 
@@ -169,7 +173,7 @@ bool GioNet::Socket::Bind()
 
 bool GioNet::Socket::Listen()
 {
-    assert(protocol == CommunicationProtocols::TCP);
+    assert(communicationProtocol == CommunicationProtocols::TCP);
     if ( listen( winSocket, SOMAXCONN ) == SOCKET_ERROR ) {
         WINSOCK_REPORT_ERROR();
         Close();
@@ -181,7 +185,7 @@ bool GioNet::Socket::Listen()
 
 std::shared_ptr<GioNet::Socket> GioNet::Socket::AcceptConnection()
 {
-    assert(protocol == CommunicationProtocols::TCP);
+    assert(communicationProtocol == CommunicationProtocols::TCP);
     sockaddr_in addr{};
     ZeroMemory(&addr, sizeof(sockaddr_in));
     int size = sizeof(addr);
@@ -204,7 +208,7 @@ std::shared_ptr<GioNet::Socket> GioNet::Socket::AcceptConnection()
 
 bool GioNet::Socket::Connect()
 {
-    assert(protocol == CommunicationProtocols::TCP);
+    assert(communicationProtocol == CommunicationProtocols::TCP);
     int result = connect( winSocket, winAddrInfo->ai_addr, static_cast<int>(winAddrInfo->ai_addrlen));
     if (result == SOCKET_ERROR)
     {

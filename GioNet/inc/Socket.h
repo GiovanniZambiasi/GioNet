@@ -14,7 +14,7 @@ namespace GioNet
     {
         NetAddress address{};
 
-        CommunicationProtocols protocol{};
+        CommunicationProtocols communicationProtocol{};
         
         SOCKET winSocket{INVALID_SOCKET};
 
@@ -33,7 +33,7 @@ namespace GioNet
         Socket(Socket&& other) = default;
         Socket& operator=(Socket&& other) = default;
 
-        CommunicationProtocols GetProtocol() const { return protocol; }
+        CommunicationProtocols GetProtocol() const { return communicationProtocol; }
 
         const NetAddress& GetAddress() const { return address; }
         
