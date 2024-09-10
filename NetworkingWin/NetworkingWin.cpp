@@ -7,7 +7,7 @@
 std::unordered_map<std::string, std::string> args{};
 GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
-constexpr int BenchmarkCount{100000};
+constexpr int BenchmarkCount{1000};
 
 void ParseArgs(int argC, char* argV[]);
 
@@ -58,12 +58,10 @@ bool RunClient()
     {
         printf("Data received from server: %s\n", buffer.Data());
     });
+
     while(client && client->IsConnected())
     {
-        for (int i = 0; i < BenchmarkCount && client->IsConnected(); ++i)
-        {
-            client->Send({"Ping!"});
-        }
+        client->Send({"Ping!"});
     }
     return true;
 }
