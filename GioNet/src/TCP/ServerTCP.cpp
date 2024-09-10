@@ -74,7 +74,7 @@ void GioNet::ServerTCP::OnPrePeerRemoved(const Peer& peer)
     }
 }
 
-void GioNet::ServerTCP::RunReceiveThreadForPeer(const Peer& peer, std::stop_token stop)
+void GioNet::ServerTCP::RunReceiveThreadForPeer(Peer peer, std::stop_token stop)
 {
     std::shared_ptr<Socket> socket = peer.connection;
     while (socket && socket->IsValid() && !stop.stop_requested())

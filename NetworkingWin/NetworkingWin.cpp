@@ -7,7 +7,7 @@
 std::unordered_map<std::string, std::string> args{};
 GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
-constexpr int BenchmarkCount{1000};
+constexpr int BenchmarkCount{500000};
 
 void ParseArgs(int argC, char* argV[]);
 
@@ -20,20 +20,20 @@ void RunServer()
     std::chrono::time_point<std::chrono::system_clock> start{};
     int count = 0;
     
-    server->BindDataReceived([&count, &start](const GioNet::Peer& peer, GioNet::Buffer&& buff)
+    server->BindDataReceived([&count, &start, server](const GioNet::Peer& peer, GioNet::Buffer&& buff)
     {
-        //printf("Data received from peer (%i): %s\n", peer.address.port, buff.Data());
+        //printf("Data received from peer (%i): %s\n", count, buff.Data());
         if(count == 0)
         {
             start = std::chrono::system_clock::now();
         }
         
         ++count;
+
     });
     while(server && server->IsRunning() && count < BenchmarkCount)
     {
-        // server->Broadcast({"Pong!"});
-        std::this_thread::sleep_for(std::chrono::seconds{1});
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     std::chrono::time_point end{std::chrono::system_clock::now()};
