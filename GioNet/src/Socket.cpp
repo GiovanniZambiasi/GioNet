@@ -194,7 +194,7 @@ std::shared_ptr<GioNet::Socket> GioNet::Socket::AcceptConnection()
     }
 
     char buff[16];
-    inet_ntop(addr.sin_family, addr.sin_zero, &buff[0], sizeof(buff));
+    inet_ntop(addr.sin_family, &addr.sin_addr, &buff[0], sizeof(buff));
 
     std::shared_ptr<Socket> connectionSocket = std::make_shared<Socket>();
     connectionSocket->address = {{buff}, addr.sin_port};

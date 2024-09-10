@@ -13,7 +13,7 @@ namespace GioNet
 
         std::optional<Buffer> DoReceive() override;
 
-        void Send(const Buffer& buffer) override;
+        void DoSend(const Buffer& buffer) override;
         
     };
 }

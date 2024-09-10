@@ -33,7 +33,7 @@ std::optional<GioNet::Buffer> GioNet::ClientUDP::DoReceive()
     return GetSocketChecked().ReceiveFrom();
 }
 
-void GioNet::ClientUDP::Send(const Buffer& buffer)
+void GioNet::ClientUDP::DoSend(const Buffer& buffer)
 {
     GetSocketChecked().SendTo(buffer);
 }

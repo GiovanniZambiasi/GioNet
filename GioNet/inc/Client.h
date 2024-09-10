@@ -31,7 +31,7 @@ namespace GioNet
 
         void Stop();
 
-        virtual void Send(const Buffer& buffer) = 0;
+        void Send(const Buffer& buffer);
         
         bool IsConnected() const;
 
@@ -51,6 +51,8 @@ namespace GioNet
         void RunListenThread();
 
         virtual std::optional<Buffer> DoReceive() = 0;
+
+        virtual void DoSend(const Buffer& buffer) = 0;
 
         void InvokeDataReceived(Buffer&& buffer);
         

@@ -32,6 +32,17 @@ void GioNet::Client::Stop()
     listenThread.request_stop();
 }
 
+void GioNet::Client::Send(const Buffer& buffer)
+{
+    if(!IsConnected())
+    {
+        GIONET_LOG("[ERROR]: Tried to send buffer, but client is not connected");
+        return;
+    }
+
+    DoSend(buffer);
+}
+
 bool GioNet::Client::IsConnected() const
 {
     return socket->IsValid();
