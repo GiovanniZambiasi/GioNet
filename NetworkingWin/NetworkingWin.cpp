@@ -68,6 +68,11 @@ bool RunClient()
 
 int main(int argC, char* argV[])
 {
+    GioNet::Buffer b{};
+    b.Write(10);
+    int a = 10;
+    b.Write(a);
+    
     ParseArgs(argC, argV);
     std::string netMode = args["mode"];
     

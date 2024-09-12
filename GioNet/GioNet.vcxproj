@@ -36,6 +36,7 @@
     <ClInclude Include="inc\Client.h" />
     <ClInclude Include="inc\GioNet.h" />
     <ClInclude Include="inc\Core.h" />
+    <ClInclude Include="inc\INetSerializable.h" />
     <ClInclude Include="inc\Logger.h" />
     <ClInclude Include="inc\NetSystem.h" />
     <ClInclude Include="inc\Server.h" />

@@ -2,6 +2,7 @@
 A barebones networking experiment using WinSock!
 
 ## TODO
-- [ ] Handle UDP disconnect
+- [ ] UDP "connections"
+- [ ] UDP reliability layer
 - [ ] Socket thread safety
-- [ ]
+- [ ] Make API work on unix (kinda easy apparently)

@@ -5,6 +5,7 @@ riderModule.iml
 .vs/
 **/*.vcxproj.filters
 **/*.vcxproj.user
+*.sln.DotSettings.user
 
 # Compiled binaries and intermediates
 /x64
