@@ -16,6 +16,9 @@ GioNet::Buffer::Buffer(std::string_view view)
 
 void GioNet::Buffer::CopyBytesIntoPayload(const void* src, size_t size)
 {
+    if(size == 0)
+        return;
+    
     size_t beforeResize = payload.size();
     payload.resize(payload.size() + size, 0);
     char* dataHead = payload.data() + beforeResize;
@@ -48,8 +51,13 @@ std::string GioNet::Buffer::ReadBytesAndConstruct()
 {
     int length = ReadBytesAndConstruct<int>();
     std::string result{};
-    result.resize(length, 0);
-    memcpy(result.data(), payload.data(), length);
+
+    if(length > 0)
+    {
+        result.resize(length, 0);
+        memcpy(result.data(), payload.data(), length);
+    }
+    
     return result;
 }
 

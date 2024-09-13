@@ -12,8 +12,6 @@
 
 namespace GioNet
 {
-    class INetSerializable;
-    
     class Buffer
     {
         std::vector<char> payload{};
@@ -33,11 +31,7 @@ namespace GioNet
         int Length() const { return static_cast<int>(payload.size()); }
 
         template<typename T>
-        void Write(const T& value)
-        {
-            static_assert(std::is_base_of_v<INetSerializable, T>, "T must implement INetSerializable, or define a specialization of this function");
-            value.Serialize(this);
-        }
+        void Write(const T& value);
 
         template<typename T>
         void WriteBytes(const T& value)
@@ -57,13 +51,6 @@ namespace GioNet
             memcpy(&v, payload.data(), sizeof(T));
             payload.erase(payload.begin(), payload.begin() + sizeof(T));
             return v;
-        }
-
-        template<typename T>
-        void ReadInto(T& address)
-        {
-            static_assert(std::is_base_of_v<INetSerializable, T>, "T must implement INetSerializable, or define a specialization of this function");
-            address.Deserialize(this);
         }
 
     private:
