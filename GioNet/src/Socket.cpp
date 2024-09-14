@@ -70,7 +70,9 @@ std::string GioNet::Socket::ToString() const
 std::optional<int> GioNet::Socket::Send(const Buffer& buffer)
 {
     assert(communicationProtocol == CommunicationProtocols::TCP);
-    int res = send(winSocket, buffer.Data(), buffer.Length(), 0);
+    static_assert(sizeof(char) == sizeof(int8_t), "Buffer data must be 8bit");
+    
+    int res = send(winSocket, reinterpret_cast<const char*>(buffer.Data()), buffer.Length(), 0);
 
     if(res == SOCKET_ERROR)
     {
@@ -85,7 +87,9 @@ std::optional<int> GioNet::Socket::Send(const Buffer& buffer)
 std::optional<int> GioNet::Socket::SendTo(const Buffer& buffer, std::optional<NetAddress> destination)
 {
     assert(communicationProtocol == CommunicationProtocols::UDP);
-    int res{};
+    static_assert(sizeof(char) == sizeof(int8_t), "Buffer data must be 8bit");
+    
+    int res;
     
     if(destination.has_value())
     {
@@ -95,12 +99,12 @@ std::optional<int> GioNet::Socket::SendTo(const Buffer& buffer, std::optional<Ne
         in_addr windowsAddr{};
         inet_pton(GioNetAddressFamily, destination->ip.c_str(), &windowsAddr);
         windowsSockAddr.sin_addr = windowsAddr;
-        res = sendto(winSocket, buffer.Data(), buffer.Length(), 0, reinterpret_cast<sockaddr*>(&windowsSockAddr), sizeof(windowsSockAddr));
+        res = sendto(winSocket, reinterpret_cast<const char*>(buffer.Data()), buffer.Length(), 0, reinterpret_cast<sockaddr*>(&windowsSockAddr), sizeof(windowsSockAddr));
     }
     else
     {
         assert(winAddrInfo);
-        res = sendto(winSocket, buffer.Data(), buffer.Length(), 0, winAddrInfo->ai_addr, sizeof(sockaddr));
+        res = sendto(winSocket, reinterpret_cast<const char*>(buffer.Data()), buffer.Length(), 0, winAddrInfo->ai_addr, sizeof(sockaddr));
     }
 
     if(res == SOCKET_ERROR)

@@ -14,7 +14,7 @@ namespace GioNet
 {
     class Buffer
     {
-        std::vector<char> payload{};
+        std::vector<int8_t> payload{};
         
     public:
         Buffer() = default;
@@ -26,9 +26,9 @@ namespace GioNet
 
         Buffer(std::string_view view);
 
-        const char* Data() const { return payload.data(); }
+        const int8_t* Data() const { return payload.data(); }
         
-        int Length() const { return static_cast<int>(payload.size()); }
+        int32_t Length() const { return static_cast<int32_t>(payload.size()); }
 
         bool IsEmpty() const { return payload.empty(); }
 
@@ -42,7 +42,7 @@ namespace GioNet
         {
             // TODO - Who cares about endianness anyway?
             payload.resize(payload.size() + sizeof(T), 0);
-            char* data = payload.data();
+            int8_t* data = payload.data();
             memcpy(data, &value, sizeof(T));
         }
 
@@ -68,12 +68,14 @@ namespace GioNet
     };
 }
 
-DECLARE_WRITE_SPEC(int)
+DECLARE_WRITE_SPEC(int8_t)
 
-DECLARE_WRITE_SPEC(char)
+DECLARE_WRITE_SPEC(int32_t)
 
 DECLARE_READ_WRITE_SPEC(std::string)
 
 DECLARE_WRITE_SPEC(std::string_view)
 
 DECLARE_READ_WRITE_SPEC(GioNet::Buffer)
+
+DECLARE_WRITE_SPEC(char)

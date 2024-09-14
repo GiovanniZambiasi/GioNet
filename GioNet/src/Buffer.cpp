@@ -5,7 +5,7 @@
 GioNet::Buffer::Buffer(const void* data, int length)
 {
     assert(length <= GIONET_BUFFER_MAX);
-    payload = std::vector<char>{};
+    payload = std::vector<int8_t>{};
     CopyBytesIntoPayload(data, length);
 }
 
@@ -34,7 +34,7 @@ void GioNet::Buffer::CopyBytesIntoPayload(const void* src, size_t size)
     
     size_t beforeResize = payload.size();
     payload.resize(payload.size() + size, 0);
-    char* dataHead = payload.data() + beforeResize;
+    int8_t* dataHead = payload.data() + beforeResize;
     memcpy(dataHead, src, size);
 }
 
@@ -49,13 +49,13 @@ void GioNet::Buffer::ExtractBytesFromPayload(void* dest, size_t size)
 }
 
 template<>
-void GioNet::Buffer::Write(const int& val)
+void GioNet::Buffer::Write(const int8_t& val)
 {
     WriteBytes(val);
 }
 
 template<>
-void GioNet::Buffer::Write(const char& val)
+void GioNet::Buffer::Write(const int32_t& val)
 {
     WriteBytes(val);
 }
@@ -63,7 +63,7 @@ void GioNet::Buffer::Write(const char& val)
 template<>
 void GioNet::Buffer::Write(const std::string& val)
 {
-    int length = static_cast<int>(val.length());
+    int32_t length = static_cast<int32_t>(val.length());
     Write(length);
     // Not copying termination char because it will be added implicitly by std::string on deserialize
     CopyBytesIntoPayload(val.data(), val.length()); 
@@ -72,7 +72,7 @@ void GioNet::Buffer::Write(const std::string& val)
 template<>
 std::string GioNet::Buffer::ReadBytesAndConstruct()
 {
-    int length = ReadBytesAndConstruct<int>();
+    int32_t length = ReadBytesAndConstruct<int32_t>();
     std::string result{};
 
     if(length > 0)
@@ -87,7 +87,7 @@ std::string GioNet::Buffer::ReadBytesAndConstruct()
 template<>
 void GioNet::Buffer::Write(const std::string_view& val)
 {
-    int length = static_cast<int>(val.length());
+    int32_t length = static_cast<int32_t>(val.length());
     Write(length);
     // Not copying termination char because it will be added implicitly by std::string on deserialize
     CopyBytesIntoPayload(val.data(), val.length()); 
@@ -96,7 +96,7 @@ void GioNet::Buffer::Write(const std::string_view& val)
 template<>
 void GioNet::Buffer::Write(const Buffer& val)
 {
-    int length = val.Length();
+    int32_t length = val.Length();
     Write(length);
     CopyBytesIntoPayload(val.Data(), val.Length()); 
 }
@@ -104,7 +104,7 @@ void GioNet::Buffer::Write(const Buffer& val)
 template<>
 GioNet::Buffer GioNet::Buffer::ReadBytesAndConstruct()
 {
-    int length = ReadBytesAndConstruct<int>();
+    int32_t length = ReadBytesAndConstruct<int32_t>();
 
     Buffer result{};
 
@@ -115,4 +115,10 @@ GioNet::Buffer GioNet::Buffer::ReadBytesAndConstruct()
     }
     
     return result;
+}
+
+template<>
+void GioNet::Buffer::Write(const char& val)
+{
+    WriteBytes(val);
 }

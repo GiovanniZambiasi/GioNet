@@ -29,7 +29,7 @@ public:
 
 TEST(BufferSerializationTests, int)
 {
-    DataSerializationTest<int> test;
+    DataSerializationTest<int32_t> test;
     test.ConstructAndTest(42);
     test.ConstructAndTest(-1000);
     test.ConstructAndTest(0);

@@ -134,7 +134,7 @@ public:
 
     void DataReceived(const GioNet::Peer& peer, GioNet::Buffer&& buff)
     {
-        PrintMessage(buff.Data());
+        PrintMessage(reinterpret_cast<const char*>(buff.Data()));
         
         std::vector<GioNet::Peer> peers{};
         sv->GetPeers(peers);
@@ -212,7 +212,7 @@ public:
 
     void DataReceived(GioNet::Buffer&& data)
     {
-        PrintMessage(data.Data());
+        PrintMessage(reinterpret_cast<const char*>(data.Data()));
     }
 };
 
