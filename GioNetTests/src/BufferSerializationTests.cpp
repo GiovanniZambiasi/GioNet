@@ -1,4 +1,5 @@
 ﻿#include "GioNet.h"
+#include "Packet.h"
 #include "gtest/gtest.h"
 
 template<typename TData>
@@ -15,14 +16,14 @@ public:
     {
         TData before = val;
         buffer.Write(before);
-        TData after = buffer.ReadBytesAndConstruct<TData>();
+        TData after = buffer.Read<TData>();
         ASSERT_EQ(val, after);
         ASSERT_TRUE(buffer.IsEmpty());
     }
 
     void ReadTest(GioNet::Buffer& buffer, const TData& expectedVal)
     {
-        TData after = buffer.ReadBytesAndConstruct<TData>();
+        TData after = buffer.Read<TData>();
         ASSERT_EQ(expectedVal, after);
     }
 };
@@ -64,11 +65,44 @@ TEST(BufferSerializationTests, ctor_string_view)
     test.ReadTest(b, "This is an std::string!");
 }
 
+TEST(BufferSerializationTests, packet)
+{
+    DataSerializationTest<GioNet::Packet> test{};
+    test.ConstructAndTest(GioNet::Packet{12, GioNet::Packet::Type::Ping, {}});
+    test.ConstructAndTest(GioNet::Packet{static_cast<uint8_t>(~0), GioNet::Packet::Type::Data, {"Payload!"}});
+    test.ConstructAndTest(GioNet::Packet{0, GioNet::Packet::Type::Ack, {"Other payload!"}});
+}
+
 TEST(BufferSerializationTests, buffer)
 {
     GioNet::Buffer data{"This is a c str!"};
     GioNet::Buffer b{};
     b.Write(data);
-    GioNet::Buffer deserialized{b.ReadBytesAndConstruct<GioNet::Buffer>()};
+    GioNet::Buffer deserialized{b.Read<GioNet::Buffer>()};
     ASSERT_EQ(deserialized, data);
+}
+
+TEST(BufferSerializationTests, subsequent_writes_same_type)
+{
+    GioNet::Buffer data{};
+    data.Write(10);
+    data.Write(999);
+    data.Write(0);
+
+    ASSERT_EQ(data.Read<int>(), 10);
+    ASSERT_EQ(data.Read<int>(), 999);
+    ASSERT_EQ(data.Read<int>(), 0);
+}
+
+TEST(BufferSerializationTests, subsequent_writes_different_types)
+{
+    GioNet::Buffer data{};
+    data.Write(10);
+    std::string s{"Hello, world!"};
+    data.Write(s);
+    data.Write('t');
+
+    ASSERT_EQ(data.Read<int>(), 10);
+    ASSERT_EQ(data.Read<std::string>(), s);
+    ASSERT_EQ(data.Read<char>(), 't');
 }

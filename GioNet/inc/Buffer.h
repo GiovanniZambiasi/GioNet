@@ -4,7 +4,7 @@
 
 #define DECLARE_WRITE_SPEC(Type) template<> void GioNet::Buffer::Write(const Type& val);
 
-#define DECLARE_READ_SPEC(Type) template<> Type GioNet::Buffer::ReadBytesAndConstruct();
+#define DECLARE_READ_SPEC(Type) template<> Type GioNet::Buffer::Read();
 
 #define DECLARE_READ_WRITE_SPEC(Type)\
     DECLARE_WRITE_SPEC(Type)\
@@ -12,6 +12,9 @@
 
 namespace GioNet
 {
+    /**
+     * Network serializable buffer
+     */
     class Buffer
     {
         std::vector<int8_t> payload{};
@@ -35,19 +38,21 @@ namespace GioNet
         bool operator==(const Buffer& rhs) const;
         
         template<typename T>
-        void Write(const T& value);
+        void Write(const T& value)
+        {
+            static_assert(std::is_trivially_copyable_v<T>, "T is a complex type, and must define a specialization for Write");
+            WriteBytes(value);
+        }
 
         template<typename T>
         void WriteBytes(const T& value)
         {
             // TODO - Who cares about endianness anyway?
-            payload.resize(payload.size() + sizeof(T), 0);
-            int8_t* data = payload.data();
-            memcpy(data, &value, sizeof(T));
+            CopyBytesIntoPayload(&value, sizeof(T));
         }
 
         template<typename T>
-        T ReadBytesAndConstruct()
+        T Read()
         {
             // TODO - Who cares about endianness anyway?
             static_assert(std::is_default_constructible_v<T>, "T must be default constructible, or define a specialization of this function");
@@ -68,9 +73,10 @@ namespace GioNet
     };
 }
 
-DECLARE_WRITE_SPEC(int8_t)
-
-DECLARE_WRITE_SPEC(int32_t)
+namespace GioNet
+{
+    struct Packet;
+}
 
 DECLARE_READ_WRITE_SPEC(std::string)
 
@@ -78,4 +84,4 @@ DECLARE_WRITE_SPEC(std::string_view)
 
 DECLARE_READ_WRITE_SPEC(GioNet::Buffer)
 
-DECLARE_WRITE_SPEC(char)
+DECLARE_READ_WRITE_SPEC(GioNet::Packet)

@@ -1,6 +1,7 @@
 ﻿#include "Buffer.h"
 #include <cassert>
 #include "Core.h"
+#include "Packet.h"
 
 GioNet::Buffer::Buffer(const void* data, int length)
 {
@@ -49,18 +50,6 @@ void GioNet::Buffer::ExtractBytesFromPayload(void* dest, size_t size)
 }
 
 template<>
-void GioNet::Buffer::Write(const int8_t& val)
-{
-    WriteBytes(val);
-}
-
-template<>
-void GioNet::Buffer::Write(const int32_t& val)
-{
-    WriteBytes(val);
-}
-
-template<>
 void GioNet::Buffer::Write(const std::string& val)
 {
     int32_t length = static_cast<int32_t>(val.length());
@@ -70,9 +59,9 @@ void GioNet::Buffer::Write(const std::string& val)
 }
 
 template<>
-std::string GioNet::Buffer::ReadBytesAndConstruct()
+std::string GioNet::Buffer::Read()
 {
-    int32_t length = ReadBytesAndConstruct<int32_t>();
+    int32_t length = Read<int32_t>();
     std::string result{};
 
     if(length > 0)
@@ -102,9 +91,9 @@ void GioNet::Buffer::Write(const Buffer& val)
 }
 
 template<>
-GioNet::Buffer GioNet::Buffer::ReadBytesAndConstruct()
+GioNet::Buffer GioNet::Buffer::Read()
 {
-    int32_t length = ReadBytesAndConstruct<int32_t>();
+    int32_t length = Read<int32_t>();
 
     Buffer result{};
 
@@ -118,7 +107,17 @@ GioNet::Buffer GioNet::Buffer::ReadBytesAndConstruct()
 }
 
 template<>
-void GioNet::Buffer::Write(const char& val)
+void GioNet::Buffer::Write(const Packet& val)
 {
-    WriteBytes(val);
+    Write<uint16_t>(val.header);
+    Write(val.payload);
+}
+
+template<>
+GioNet::Packet GioNet::Buffer::Read()
+{
+    Packet packet{};
+    packet.header = Read<uint16_t>();
+    packet.payload = Read<Buffer>();
+    return packet;
 }
