@@ -14,6 +14,19 @@ GioNet::Buffer::Buffer(std::string_view view)
     Write(view);
 }
 
+bool GioNet::Buffer::operator==(const Buffer& rhs) const
+{
+    if(Length() != rhs.Length())
+        return false;
+
+    return std::equal(payload.begin(), payload.end(), rhs.payload.begin(), rhs.payload.end());
+}
+
+void GioNet::Buffer::Copy(const Buffer& other)
+{
+    payload.insert(payload.end(), other.payload.begin(), other.payload.end());
+}
+
 void GioNet::Buffer::CopyBytesIntoPayload(const void* src, size_t size)
 {
     if(size == 0)
@@ -23,6 +36,16 @@ void GioNet::Buffer::CopyBytesIntoPayload(const void* src, size_t size)
     payload.resize(payload.size() + size, 0);
     char* dataHead = payload.data() + beforeResize;
     memcpy(dataHead, src, size);
+}
+
+void GioNet::Buffer::ExtractBytesFromPayload(void* dest, size_t size)
+{
+    if(size == 0)
+        return;
+    
+    assert(payload.size() >= size);
+    memcpy(dest, payload.data(), size);
+    payload.erase(payload.begin(), payload.begin() + size);
 }
 
 template<>
@@ -55,7 +78,7 @@ std::string GioNet::Buffer::ReadBytesAndConstruct()
     if(length > 0)
     {
         result.resize(length, 0);
-        memcpy(result.data(), payload.data(), length);
+        ExtractBytesFromPayload(result.data(), length);
     }
     
     return result;
@@ -68,4 +91,28 @@ void GioNet::Buffer::Write(const std::string_view& val)
     Write(length);
     // Not copying termination char because it will be added implicitly by std::string on deserialize
     CopyBytesIntoPayload(val.data(), val.length()); 
+}
+
+template<>
+void GioNet::Buffer::Write(const Buffer& val)
+{
+    int length = val.Length();
+    Write(length);
+    CopyBytesIntoPayload(val.Data(), val.Length()); 
+}
+
+template<>
+GioNet::Buffer GioNet::Buffer::ReadBytesAndConstruct()
+{
+    int length = ReadBytesAndConstruct<int>();
+
+    Buffer result{};
+
+    if(length > 0)
+    {
+        result.payload.resize(length, 0);
+        ExtractBytesFromPayload(result.payload.data(), length);
+    }
+    
+    return result;
 }

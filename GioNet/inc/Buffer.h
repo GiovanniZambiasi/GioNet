@@ -30,6 +30,10 @@ namespace GioNet
         
         int Length() const { return static_cast<int>(payload.size()); }
 
+        bool IsEmpty() const { return payload.empty(); }
+
+        bool operator==(const Buffer& rhs) const;
+        
         template<typename T>
         void Write(const T& value);
 
@@ -48,13 +52,19 @@ namespace GioNet
             // TODO - Who cares about endianness anyway?
             static_assert(std::is_default_constructible_v<T>, "T must be default constructible, or define a specialization of this function");
             T v{};
-            memcpy(&v, payload.data(), sizeof(T));
-            payload.erase(payload.begin(), payload.begin() + sizeof(T));
+            ExtractBytesFromPayload(&v, sizeof(T));
             return v;
         }
 
+        /**
+         * Copies payload from other buffer without removing existing data in this buffer 
+         */
+        void Copy(const Buffer& other);
+
     private:
         void CopyBytesIntoPayload(const void* src, size_t size);
+
+        void ExtractBytesFromPayload(void* dest, size_t size);
     };
 }
 
@@ -65,3 +75,5 @@ DECLARE_WRITE_SPEC(char)
 DECLARE_READ_WRITE_SPEC(std::string)
 
 DECLARE_WRITE_SPEC(std::string_view)
+
+DECLARE_READ_WRITE_SPEC(GioNet::Buffer)

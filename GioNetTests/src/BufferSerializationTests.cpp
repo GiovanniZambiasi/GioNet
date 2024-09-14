@@ -17,6 +17,7 @@ public:
         buffer.Write(before);
         TData after = buffer.ReadBytesAndConstruct<TData>();
         ASSERT_EQ(val, after);
+        ASSERT_TRUE(buffer.IsEmpty());
     }
 
     void ReadTest(GioNet::Buffer& buffer, const TData& expectedVal)
@@ -61,4 +62,13 @@ TEST(BufferSerializationTests, ctor_string_view)
     std::string str{"This is an std::string!"};
     b = GioNet::Buffer{str};
     test.ReadTest(b, "This is an std::string!");
+}
+
+TEST(BufferSerializationTests, buffer)
+{
+    GioNet::Buffer data{"This is a c str!"};
+    GioNet::Buffer b{};
+    b.Write(data);
+    GioNet::Buffer deserialized{b.ReadBytesAndConstruct<GioNet::Buffer>()};
+    ASSERT_EQ(deserialized, data);
 }
