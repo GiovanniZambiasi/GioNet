@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BufferSerializationTests.cpp" />
+    <ClCompile Include="src\BufferTests.cpp" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

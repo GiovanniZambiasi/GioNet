@@ -2,7 +2,7 @@
 #include <cassert>
 #include "Core.h"
 
-GioNet::Buffer::Buffer(const char* data, int length)
+GioNet::Buffer::Buffer(const void* data, int length)
 {
     assert(length <= GIONET_BUFFER_MAX);
     payload = std::vector<char>{};

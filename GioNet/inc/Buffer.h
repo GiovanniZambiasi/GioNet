@@ -22,7 +22,7 @@ namespace GioNet
         /**
          * Constructs the buffer from raw data 
          */
-        Buffer(const char* data, int length);
+        Buffer(const void* data, int length);
 
         Buffer(std::string_view view);
 

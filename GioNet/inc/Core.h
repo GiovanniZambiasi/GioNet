@@ -55,7 +55,7 @@ namespace GioNet
 
         unsigned short port{0};
 
-        bool IsServer() const { return ip.empty(); }
+        bool IsServer() const { return ip.empty() && port != 0; }
         
         bool operator==(const NetAddress& address) const = default;
         
