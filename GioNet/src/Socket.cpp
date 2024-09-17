@@ -1,14 +1,13 @@
 ﻿#include "Socket.h"
 
 #include <cassert>
-#include <cstdio>
 #include <format>
 
 #include "Buffer.h"
 
 namespace
 {
-    int GioNetAddressFamily = AF_INET;
+    unsigned short GioNetAddressFamily = AF_INET;
 }
 
 GioNet::Socket::Socket(const NetAddress& address, CommunicationProtocols protocol)
@@ -95,7 +94,7 @@ std::optional<int> GioNet::Socket::SendTo(const Buffer& buffer, std::optional<Ne
     {
         sockaddr_in windowsSockAddr{};
         windowsSockAddr.sin_family = GioNetAddressFamily;
-        windowsSockAddr.sin_port = destination->port;
+        windowsSockAddr.sin_port = htons(destination->port);
         in_addr windowsAddr{};
         inet_pton(GioNetAddressFamily, destination->ip.c_str(), &windowsAddr);
         windowsSockAddr.sin_addr = windowsAddr;
@@ -153,7 +152,7 @@ std::optional<GioNet::Buffer> GioNet::Socket::ReceiveFrom(NetAddress* outFrom)
     {
         char buff[25];
         inet_ntop(AF_INET, &from.sin_addr, &buff[0], sizeof(buff));
-        (*outFrom) = { {buff}, from.sin_port};
+        (*outFrom) = { {buff}, ntohs(from.sin_port)};
     }
 
     return {Buffer{&outBuffer[0], receivedBytes}};

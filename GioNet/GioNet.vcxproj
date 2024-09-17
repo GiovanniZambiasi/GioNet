@@ -25,12 +25,9 @@
     <ClCompile Include="src\Logger.cpp" />
     <ClCompile Include="src\NetSystem.cpp" />
     <ClCompile Include="src\Packet.cpp" />
+    <ClCompile Include="src\Peer.cpp" />
     <ClCompile Include="src\Server.cpp" />
     <ClCompile Include="src\Socket.cpp" />
-    <ClCompile Include="src\TCP\ClientTCP.cpp" />
-    <ClCompile Include="src\TCP\ServerTCP.cpp" />
-    <ClCompile Include="src\UDP\ClientUDP.cpp" />
-    <ClCompile Include="src\UDP\ServerUDP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Buffer.h" />
@@ -40,12 +37,9 @@
     <ClInclude Include="inc\Logger.h" />
     <ClInclude Include="inc\NetSystem.h" />
     <ClInclude Include="inc\Packet.h" />
+    <ClInclude Include="inc\Peer.h" />
     <ClInclude Include="inc\Server.h" />
     <ClInclude Include="inc\Socket.h" />
-    <ClInclude Include="inc\TCP\ClientTCP.h" />
-    <ClInclude Include="inc\TCP\ServerTCP.h" />
-    <ClInclude Include="inc\UDP\ClientUDP.h" />
-    <ClInclude Include="inc\UDP\ServerUDP.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

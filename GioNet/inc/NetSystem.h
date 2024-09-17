@@ -25,9 +25,9 @@ namespace GioNet
         
         static void Reset() { instance.reset(); }
 
-        std::shared_ptr<Server> CreateServer(unsigned short port, CommunicationProtocols protocol);
+        std::shared_ptr<Server> CreateServer(unsigned short port);
 
-        std::shared_ptr<Client> CreateClient(const char* ip, unsigned short port, CommunicationProtocols protocol);
+        std::shared_ptr<Client> CreateClient(const char* ip, unsigned short port);
     };    
 }
 

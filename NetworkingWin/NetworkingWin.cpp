@@ -5,7 +5,6 @@
 
 
 std::unordered_map<std::string, std::string> args{};
-GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
 constexpr int BenchmarkCount{500000};
 
@@ -14,7 +13,7 @@ void ParseArgs(int argC, char* argV[]);
 void RunServer()
 {
     auto& sys = GioNet::NetSystem::Get();
-    std::shared_ptr<GioNet::Server> server = sys.CreateServer(GIONET_DEFAULT_PORT, protocol);
+    std::shared_ptr<GioNet::Server> server = sys.CreateServer(GIONET_DEFAULT_PORT);
     server->Start();
 
     std::chrono::time_point<std::chrono::system_clock> start{};
@@ -52,7 +51,7 @@ bool RunClient()
     }
         
     auto& sys = GioNet::NetSystem::Get();
-    std::shared_ptr<GioNet::Client> client = sys.CreateClient(serverIpLoc->second.c_str(), GIONET_DEFAULT_PORT, protocol);
+    std::shared_ptr<GioNet::Client> client = sys.CreateClient(serverIpLoc->second.c_str(), GIONET_DEFAULT_PORT);
     client->Start();
     client->BindDataReceived([](GioNet::Buffer&& buffer)
     {

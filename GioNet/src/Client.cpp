@@ -3,8 +3,9 @@
 #include "Buffer.h"
 #include "Socket.h"
 
-GioNet::Client::Client(const std::shared_ptr<Socket>& socket)
-    : socket(socket)
+GioNet::Client::Client(const NetAddress& serverAddress)
+    : serverAddress(serverAddress),
+      socket(std::make_shared<Socket>(serverAddress, CommunicationProtocols::UDP))
 {
 }
 
@@ -20,6 +21,18 @@ GioNet::Client::~Client()
 
 void GioNet::Client::Start()
 {
+    if(socket && socket->IsValid())
+    {
+        GIONET_LOG("Starting UDP client...\n");
+        // UDP Client needs to initiate communication before attempting to listen from socket
+        Send({"Greetings!"});
+        RunListenThread();
+    }
+    else
+    {
+        GIONET_LOG("Connection failed...\n");
+        Stop();
+    }
 }
 
 void GioNet::Client::Stop()
@@ -40,7 +53,7 @@ void GioNet::Client::Send(const Buffer& buffer)
         return;
     }
 
-    DoSend(buffer);
+    GetSocketChecked().SendTo(buffer);
 }
 
 bool GioNet::Client::IsConnected() const
@@ -63,8 +76,12 @@ void GioNet::Client::ListenThreadImpl()
 {
     while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
     {
-        std::optional<Buffer> received = DoReceive();
+        NetAddress addr{};
+        std::optional<Buffer> received = socket->ReceiveFrom(&addr);
 
+        if(addr != serverAddress)
+            continue;
+        
         if (received)
         {
             InvokeDataReceived(std::move(*received));

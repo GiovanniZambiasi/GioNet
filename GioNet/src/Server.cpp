@@ -3,9 +3,38 @@
 #include <string>
 #include "Socket.h"
 
-std::string GioNet::Peer::ToString() const
+GioNet::Server::Server(unsigned short port)
+    : listenSocket(std::make_shared<Socket>(NetAddress{"", port}, CommunicationProtocols::UDP))
 {
-    return connection ? connection->ToString() : address.ToString();
+    assert(listenSocket && listenSocket->IsValid());
+    listenSocket->Bind();
+}
+
+GioNet::Server::~Server()
+{
+    Server::Stop();
+}
+
+void GioNet::Server::Start()
+{
+    assert(listenSocket && listenSocket->IsValid());
+    GIONET_LOG("Starting UDP server...\n");
+    listenThread = std::jthread{&Server::RunListenThread, this};
+}
+
+void GioNet::Server::Stop()
+{
+    if(listenSocket->IsValid())
+    {
+        listenSocket->Close();
+    }
+
+    if(listenThread.joinable())
+    {
+        listenThread.request_stop();
+    }
+    
+    peers.clear();
 }
 
 void GioNet::Server::GetPeers(std::vector<Peer>& outPeers) const
@@ -36,41 +65,28 @@ const GioNet::Peer* GioNet::Server::TryGetPeer(const NetAddress& address) const
     return nullptr;
 }
 
-GioNet::Server::Server(const std::shared_ptr<Socket>& listenSocket)
-    : listenSocket(listenSocket)
+bool GioNet::Server::IsRunning() const
 {
-    assert(listenSocket && listenSocket->IsValid());
-    listenSocket->Bind();
+    return listenSocket && listenSocket->IsValid();
 }
 
-GioNet::Server::~Server()
+void GioNet::Server::Broadcast(const Buffer& buffer, const std::unordered_set<Peer>& except)
 {
-    Server::Stop();
-}
+    std::vector<Peer> peersCopy{};
+    GetPeers(peersCopy);
 
-void GioNet::Server::Start()
-{
-    assert(listenSocket && listenSocket->IsValid());
-}
-
-void GioNet::Server::Broadcast(const Buffer& buffer)
-{
-    const auto& peerAddresses = std::views::keys(peers);
-
-    for(const NetAddress& address : peerAddresses)
+    for (const Peer& peer : peersCopy)
     {
-        const Peer* peer = TryGetPeer(address);
+        if(except.contains(peer))
+            continue;
 
-        if(peer != nullptr)
-        {
-            Send(buffer, *peer);
-        }
+        Send(buffer, peer);
     }
 }
 
 void GioNet::Server::Send(const Buffer& buffer, const Peer& peer)
 {
-    std::optional<int> res = DoSend(buffer, peer);
+    std::optional<int> res = GetSocketChecked().SendTo(buffer, peer.address);
 
     if(!res)
     {
@@ -78,14 +94,10 @@ void GioNet::Server::Send(const Buffer& buffer, const Peer& peer)
     }
 }
 
-void GioNet::Server::Stop()
+GioNet::Socket& GioNet::Server::GetSocketChecked()
 {
-    if(listenSocket->IsValid())
-    {
-        listenSocket->Close();
-    }
-    
-    peers.clear();
+    assert(listenSocket && listenSocket->IsValid());
+    return *listenSocket;
 }
 
 void GioNet::Server::BindDataReceived(DataReceivedDelegate&& delegate)
@@ -152,3 +164,34 @@ void GioNet::Server::InvokeDataReceived(const Peer& peer, Buffer&& buffer)
     if(dataReceivedDelegate)
         dataReceivedDelegate(peer, std::move(buffer));
 }
+
+void GioNet::Server::RunListenThread()
+{
+    std::shared_ptr<Socket> socket = GetSocket();
+    while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
+    {
+        NetAddress source{};
+        std::optional<Buffer> received = socket->ReceiveFrom(&source);
+
+        if(received)
+        {
+            if(const Peer* peer = TryGetPeer(source))
+            {
+                InvokeDataReceived(*peer, std::move(*received));
+                received.reset();
+            }
+            else
+            {
+                Peer newPeer{source, socket};
+                AddPeer(newPeer);
+                InvokeDataReceived(newPeer, std::move(*received));
+                received.reset();
+            }
+        }
+        else
+        {
+            // TODO - Fix recv failed after a broken send
+        }
+    }
+}
+

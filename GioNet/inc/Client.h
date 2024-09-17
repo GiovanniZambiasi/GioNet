@@ -8,7 +8,6 @@
 
 namespace GioNet
 {
-    enum class CommunicationProtocols;
     struct NetAddress;
     class Socket;
 
@@ -18,6 +17,8 @@ namespace GioNet
         using DataReceivedDelegate = std::function<void(Buffer&&)>;
         
     private:
+        NetAddress serverAddress{};
+        
         std::shared_ptr<Socket> socket{};
 
         std::jthread listenThread{};
@@ -25,6 +26,8 @@ namespace GioNet
         DataReceivedDelegate dataReceived{};
         
     public:
+        Client(const NetAddress& serverAddress);
+        
         virtual ~Client();
         
         virtual void Start();
@@ -45,18 +48,11 @@ namespace GioNet
 
         std::shared_ptr<Socket> GetSocket(){ return socket;}
         
-    protected:
-        Client(const std::shared_ptr<Socket>& socket);
-
+    private:
         void RunListenThread();
-
-        virtual std::optional<Buffer> DoReceive() = 0;
-
-        virtual void DoSend(const Buffer& buffer) = 0;
 
         void InvokeDataReceived(Buffer&& buffer);
         
-    private:
         void ListenThreadImpl();
         
     };    

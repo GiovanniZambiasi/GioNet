@@ -56,8 +56,10 @@ namespace GioNet
         unsigned short port{0};
 
         bool IsServer() const { return ip.empty() && port != 0; }
+
+        bool IsLoopback() const;
         
-        bool operator==(const NetAddress& address) const = default;
+        bool operator==(const NetAddress& other) const;
         
         std::string ToString() const;
     };
@@ -66,8 +68,5 @@ namespace GioNet
 template<>
 struct std::hash<GioNet::NetAddress>
 {
-    std::size_t operator()(const GioNet::NetAddress& address) const noexcept
-    {
-        return std::hash<std::string>()(address.ToString()) ^ std::hash<unsigned short>()(address.port);
-    }
+    std::size_t operator()(const GioNet::NetAddress& address) const noexcept;
 };

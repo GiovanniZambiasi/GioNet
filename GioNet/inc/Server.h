@@ -3,27 +3,16 @@
 #include <memory>
 #include <shared_mutex>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Buffer.h"
 #include "Core.h"
-#include "Socket.h"
+#include "Peer.h"
 
 namespace GioNet
 {
-    enum class CommunicationProtocols;
     class Socket;
-
-    struct Peer
-    {
-        NetAddress address{};
-        
-        std::shared_ptr<Socket> connection{};
-        
-        std::string ToString() const;
-
-        bool operator==(const Peer& other) const = default;
-    };
-
+    
     class Server
     {
     public:
@@ -34,6 +23,8 @@ namespace GioNet
     private:
         std::shared_ptr<Socket> listenSocket{};
 
+        std::jthread listenThread{};
+        
         std::unordered_map<NetAddress, Peer> peers{};
 
         mutable std::shared_mutex peersMutex{};
@@ -46,6 +37,8 @@ namespace GioNet
         
     public:
         GIONET_NOCOPY(Server)
+
+        Server(unsigned short port);
         
         virtual ~Server();
         
@@ -59,15 +52,11 @@ namespace GioNet
         
         void BindPeerDisconnected(PeerDelegate&& delegate);
         
-        void Broadcast(const Buffer& buffer);
+        void Broadcast(const Buffer& buffer, const std::unordered_set<Peer>& except = {});
 
         void Send(const Buffer& buffer, const Peer& peer);
 
-        Socket& GetSocketChecked()
-        {
-            assert(listenSocket && listenSocket->IsValid());
-            return *listenSocket;
-        }
+        Socket& GetSocketChecked();
 
         std::shared_ptr<Socket> GetSocket() { return listenSocket; }
 
@@ -81,22 +70,19 @@ namespace GioNet
 
         const Peer* TryGetPeer(const NetAddress& address) const;
         
-        bool IsRunning() const { return listenSocket && listenSocket->IsValid(); }
+        bool IsRunning() const;
 
-    protected:
-        Server(const std::shared_ptr<Socket>& listenSocket);
-
+    private:
+        void RunListenThread();
+        
         void AddPeer(const Peer& peer);
 
         void RemovePeer(const Peer& peer);
-        
+
         virtual void OnPostPeerAdded(const Peer& peer) { }
 
         virtual void OnPrePeerRemoved(const Peer& peer) { }
 
-        virtual std::optional<int> DoSend(const Buffer& buffer, const Peer& peer) = 0;
-
         void InvokeDataReceived(const Peer& peer, Buffer&& buffer);
-
     };
 }

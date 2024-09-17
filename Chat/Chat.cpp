@@ -7,7 +7,6 @@
 constexpr int MaxMessageLength{100};
 
 std::unordered_map<std::string, std::string> args{};
-GioNet::CommunicationProtocols protocol = GioNet::CommunicationProtocols::TCP;
 
 class ChatHost
 {
@@ -104,7 +103,7 @@ class ChatServer : public ChatHost
 public:
     ChatServer()
     {
-        sv = GioNet::NetSystem::Get().CreateServer(GIONET_DEFAULT_PORT, protocol);
+        sv = GioNet::NetSystem::Get().CreateServer(GIONET_DEFAULT_PORT);
         username = "SERVER";
     }
 
@@ -134,15 +133,9 @@ public:
 
     void DataReceived(const GioNet::Peer& peer, GioNet::Buffer&& buff)
     {
-        PrintMessage(reinterpret_cast<const char*>(buff.Data()));
-        
-        std::vector<GioNet::Peer> peers{};
-        sv->GetPeers(peers);
-        for (const GioNet::Peer & entry : peers)
-        {
-            if(entry != peer)
-                sv->Send(buff, entry);
-        }
+        std::string message = buff.Read<std::string>();
+        PrintMessage(message);
+        sv->Broadcast({message}, { peer });
     }
 
     void PeerConnected(const GioNet::Peer& peer)
@@ -183,7 +176,7 @@ public:
     {
         std::cout << "What is the server ip? ";
         std::string serverIp{ReadInput()};
-        client = GioNet::NetSystem::Get().CreateClient(serverIp.c_str(), GIONET_DEFAULT_PORT, protocol);
+        client = GioNet::NetSystem::Get().CreateClient(serverIp.c_str(), GIONET_DEFAULT_PORT);
         client->BindDataReceived([this](GioNet::Buffer&& buff)
         {
             DataReceived(std::move(buff));
@@ -212,7 +205,8 @@ public:
 
     void DataReceived(GioNet::Buffer&& data)
     {
-        PrintMessage(reinterpret_cast<const char*>(data.Data()));
+        std::string message = data.Read<std::string>();
+        PrintMessage(message);
     }
 };
 
