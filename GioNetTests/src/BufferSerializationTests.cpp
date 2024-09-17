@@ -6,7 +6,7 @@ template <typename TData>
 class DataSerializationTest
 {
 public:
-    void ConstructAndTest(const TData val)
+    void ConstructBufferAndTest(const TData val)
     {
         GioNet::Buffer b{};
         WriteReadTest(b, val);
@@ -31,27 +31,27 @@ public:
 TEST(BufferSerializationTests, int)
 {
     DataSerializationTest<int32_t> test;
-    test.ConstructAndTest(42);
-    test.ConstructAndTest(-1000);
-    test.ConstructAndTest(0);
-    test.ConstructAndTest(~0);
+    test.ConstructBufferAndTest(42);
+    test.ConstructBufferAndTest(-1000);
+    test.ConstructBufferAndTest(0);
+    test.ConstructBufferAndTest(~0);
 }
 
 TEST(BufferSerializationTests, char)
 {
     DataSerializationTest<char> test;
-    test.ConstructAndTest('a');
-    test.ConstructAndTest('\n');
-    test.ConstructAndTest(0);
-    test.ConstructAndTest(~0);
+    test.ConstructBufferAndTest('a');
+    test.ConstructBufferAndTest('\n');
+    test.ConstructBufferAndTest(0);
+    test.ConstructBufferAndTest(~0);
 }
 
 TEST(BufferSerializationTests, std_string)
 {
     DataSerializationTest<std::string> test;
-    test.ConstructAndTest("Foo");
-    test.ConstructAndTest("");
-    test.ConstructAndTest("Hello, world!\n");
+    test.ConstructBufferAndTest("Foo");
+    test.ConstructBufferAndTest("");
+    test.ConstructBufferAndTest("Hello, world!\n");
 }
 
 TEST(BufferSerializationTests, ctor_string_view)
@@ -68,20 +68,40 @@ TEST(BufferSerializationTests, ctor_string_view)
 TEST(BufferSerializationTests, packet)
 {
     DataSerializationTest<GioNet::Packet> test{};
-    test.ConstructAndTest(GioNet::Packet{
+    GioNet::Packet packet
+    {
         GioNet::Packet::Types::Ping,
         { GioNet::Packet::Flags::Fragmented, GioNet::Packet::Flags::Reliable, }
-    });
-    test.ConstructAndTest(GioNet::Packet{
+    };
+    packet.id = 0;
+    test.ConstructBufferAndTest(packet);
+
+    packet = GioNet::Packet{
         GioNet::Packet::Types::Data,
         {},
         {"Payload!"}
-    });
-    test.ConstructAndTest(GioNet::Packet{
+    };
+    test.ConstructBufferAndTest(packet);
+
+    packet = GioNet::Packet{
         GioNet::Packet::Types::Ack,
         {GioNet::Packet::Flags::Reliable, GioNet::Packet::Flags::Fragmented},
         {"Other payload!"}
-    });
+    };
+    packet.id = ~0;
+    test.ConstructBufferAndTest(packet);
+}
+
+TEST(BufferSerializationTests, packet_no_id)
+{
+    GioNet::Buffer data{};
+    GioNet::Packet p{GioNet::Packet::Types::Connect, {GioNet::Packet::Reliable}};
+
+    auto statement = [&data, &p]
+    {
+        data.Write(p);
+    };
+    ASSERT_DEBUG_DEATH(statement(), ".*id\.has_value");
 }
 
 TEST(BufferSerializationTests, buffer)

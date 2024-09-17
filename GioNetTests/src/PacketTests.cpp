@@ -10,7 +10,7 @@ public:
         ASSERT_EQ(type, packet.GetType());
         for (GioNet::Packet::Flags flag : flags)
         {
-            ASSERT_TRUE(packet.HasFlag(flag));
+            ASSERT_TRUE(packet.HasFlags(flag));
         }
     }
 };

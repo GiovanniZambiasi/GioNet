@@ -109,7 +109,14 @@ GioNet::Buffer GioNet::Buffer::Read()
 template<>
 void GioNet::Buffer::Write(const Packet& val)
 {
-    Write<uint16_t>(val.header);
+    Write<Packet::HeaderType>(val.header);
+
+    if(Packet::HasFlags(val.header, Packet::Reliable))
+    {
+        assert(val.id.has_value());
+        Write<Packet::IdType>(val.id.value());
+    }
+    
     Write(val.payload);
 }
 
@@ -117,7 +124,13 @@ template<>
 GioNet::Packet GioNet::Buffer::Read()
 {
     Packet packet{};
-    packet.header = Read<uint16_t>();
+    packet.header = Read<Packet::HeaderType>();
+
+    if(packet.HasFlags(Packet::Reliable))
+    {
+        packet.id = Read<Packet::IdType>();
+    }
+    
     packet.payload = Read<Buffer>();
     return packet;
 }

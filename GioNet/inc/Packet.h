@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <cstdint>
+#include <optional>
 
 #include "Buffer.h"
 
@@ -7,6 +8,9 @@ namespace GioNet
 {
     struct Packet
     {
+        using HeaderType = uint8_t;
+        using IdType = uint16_t;
+        
         enum class Types : uint8_t
         {
             Ping = 0,
@@ -21,9 +25,13 @@ namespace GioNet
             Fragmented = 0b10,
         };
 
-        uint8_t header{0};
+        HeaderType header{0};
 
+        std::optional<IdType> id{};
+        
         Buffer payload{};
+
+        static bool HasFlags(HeaderType header, Flags flags);
 
         Packet() = default;
 
@@ -35,7 +43,7 @@ namespace GioNet
 
         void SetFlag(Flags flag, bool enabled);
 
-        bool HasFlag(Flags flag) const;
+        bool HasFlags(Flags flags) const;
 
         bool operator==(const Packet& rhs) const = default;
 

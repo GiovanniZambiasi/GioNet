@@ -15,6 +15,13 @@ namespace
     constexpr uint8_t MaxViableFlags = FlagsMask >> FlagsOffset;
 }
 
+bool GioNet::Packet::HasFlags(HeaderType header, Flags flags)
+{
+    uint8_t flagBits = flags;
+    assert(flagBits <= MaxViableFlags);
+    return (header & (flagBits << FlagsOffset)) != 0;
+}
+
 GioNet::Packet::Packet(Types type, std::initializer_list<Flags> flags, Buffer&& payload)
     :payload(std::move(payload))
 {
@@ -57,15 +64,13 @@ void GioNet::Packet::SetFlag(Flags flag, bool enabled)
     }
 }
 
-bool GioNet::Packet::HasFlag(Flags flag) const
+bool GioNet::Packet::HasFlags(Flags flags) const
 {
-    uint8_t flagBits = flag;
-    assert(flagBits <= MaxViableFlags);
-    return (header & (flagBits << FlagsOffset)) != 0;
+    return HasFlags(header, flags);
 }
 
 std::string GioNet::Packet::ToString() const
 {
-    return std::format("(Packet: header {} | payload {} bytes)", std::bitset<sizeof(uint8_t)>{header}.to_string(),
+    return std::format("(Packet: header {} | payload {} bytes)", std::bitset<sizeof(header) * 8>{header}.to_string(),
         static_cast<unsigned char>(GetType()), payload.Length());
 }

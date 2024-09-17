@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <cassert>
 #include <string_view>
 #include <vector>
 
@@ -56,6 +57,7 @@ namespace GioNet
         {
             // TODO - Who cares about endianness anyway?
             static_assert(std::is_default_constructible_v<T>, "T must be default constructible, or define a specialization of this function");
+            assert(Length() >= sizeof(T));
             T v{};
             ExtractBytesFromPayload(&v, sizeof(T));
             return v;
