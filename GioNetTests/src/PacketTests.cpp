@@ -4,18 +4,21 @@
 class PacketHeaderTest
 {
 public:
-    void Test(uint16_t id, GioNet::Packet::Type type)
+    void Test(GioNet::Packet::Types type, std::initializer_list<GioNet::Packet::Flags> flags = {})
     {
-        GioNet::Packet packet{id, type};
-        ASSERT_EQ(id, packet.GetId());
+        GioNet::Packet packet{type, flags};
         ASSERT_EQ(type, packet.GetType());
+        for (GioNet::Packet::Flags flag : flags)
+        {
+            ASSERT_TRUE(packet.HasFlag(flag));
+        }
     }
 };
 
 TEST(Packet, header_encoding)
 {
     PacketHeaderTest t{};
-    t.Test(255, GioNet::Packet::Type::Ack);
-    t.Test(GioNet::Packet::GetMaximumViableId(), GioNet::Packet::Type::Connect);
-    t.Test(0, GioNet::Packet::Type::Data);
+    t.Test(GioNet::Packet::Types::Ack, { });
+    t.Test(GioNet::Packet::Types::Connect, {GioNet::Packet::Flags::Fragmented, GioNet::Packet::Flags::Reliable});
+    t.Test(GioNet::Packet::Types::Data, {GioNet::Packet::Flags::Reliable});
 }

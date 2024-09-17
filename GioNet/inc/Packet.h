@@ -7,7 +7,7 @@ namespace GioNet
 {
     struct Packet
     {
-        enum class Type : uint8_t
+        enum class Types : uint8_t
         {
             Ping = 0,
             Ack,
@@ -15,22 +15,42 @@ namespace GioNet
             Data
         };
 
-        uint16_t header{0};
+        enum Flags : uint8_t
+        {
+            Reliable = 0b1,
+            Fragmented = 0b10,
+        };
+
+        uint8_t header{0};
 
         Buffer payload{};
 
-        static uint16_t GetMaximumViableId();
-        
         Packet() = default;
 
-        Packet(uint16_t id, Type type, Buffer&& payload = {});
+        Packet(Types type, std::initializer_list<Flags> flags = {}, Buffer&& payload = {});
 
-        uint16_t GetId() const;
-        
-        Type GetType() const;
+        Types GetType() const;
+
+        Flags GetFlags() const;
+
+        void SetFlag(Flags flag, bool enabled);
+
+        bool HasFlag(Flags flag) const;
 
         bool operator==(const Packet& rhs) const = default;
 
         std::string ToString() const;
     };
+
+    inline Packet::Flags operator|(Packet::Flags lhs, Packet::Flags rhs)
+    {
+        return static_cast<Packet::Flags>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+    }
+
+    inline Packet::Flags& operator|=(Packet::Flags& lhs, Packet::Flags rhs)
+    {
+        lhs = lhs | rhs;
+        return lhs;
+    }
+
 }

@@ -2,7 +2,7 @@
 #include "Packet.h"
 #include "gtest/gtest.h"
 
-template<typename TData>
+template <typename TData>
 class DataSerializationTest
 {
 public:
@@ -68,9 +68,20 @@ TEST(BufferSerializationTests, ctor_string_view)
 TEST(BufferSerializationTests, packet)
 {
     DataSerializationTest<GioNet::Packet> test{};
-    test.ConstructAndTest(GioNet::Packet{12, GioNet::Packet::Type::Ping, {}});
-    test.ConstructAndTest(GioNet::Packet{static_cast<uint8_t>(~0), GioNet::Packet::Type::Data, {"Payload!"}});
-    test.ConstructAndTest(GioNet::Packet{0, GioNet::Packet::Type::Ack, {"Other payload!"}});
+    test.ConstructAndTest(GioNet::Packet{
+        GioNet::Packet::Types::Ping,
+        { GioNet::Packet::Flags::Fragmented, GioNet::Packet::Flags::Reliable, }
+    });
+    test.ConstructAndTest(GioNet::Packet{
+        GioNet::Packet::Types::Data,
+        {},
+        {"Payload!"}
+    });
+    test.ConstructAndTest(GioNet::Packet{
+        GioNet::Packet::Types::Ack,
+        {GioNet::Packet::Flags::Reliable, GioNet::Packet::Flags::Fragmented},
+        {"Other payload!"}
+    });
 }
 
 TEST(BufferSerializationTests, buffer)
