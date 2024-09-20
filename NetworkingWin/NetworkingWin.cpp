@@ -15,30 +15,15 @@ void RunServer()
     auto& sys = GioNet::NetSystem::Get();
     std::shared_ptr<GioNet::Server> server = sys.CreateServer(GIONET_DEFAULT_PORT);
     server->Start();
-
-    std::chrono::time_point<std::chrono::system_clock> start{};
-    int count = 0;
-    
-    server->BindDataReceived([&count, &start, server](const GioNet::Peer& peer, GioNet::Buffer&& buff)
+    server->BindDataReceived([](const GioNet::Peer& peer, GioNet::Buffer&& buff)
     {
-        //printf("Data received from peer (%i): %s\n", count, buff.Data());
-        if(count == 0)
-        {
-            start = std::chrono::system_clock::now();
-        }
-        
-        ++count;
+        printf("Data received from peer %s\n", buff.Data());
 
     });
-    while(server && server->IsRunning() && count < BenchmarkCount)
+    while(server && server->IsRunning())
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
-
-    std::chrono::time_point end{std::chrono::system_clock::now()};
-    
-    std::chrono::seconds duration{ std::chrono::duration_cast<std::chrono::seconds>(end - start) };
-    printf("Server finished receiving %i messages in %lld seconds\n", count, duration.count());
 }
 
 bool RunClient()
@@ -61,6 +46,7 @@ bool RunClient()
     while(client && client->IsConnected())
     {
         client->Send({"Ping!"});
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
     return true;
 }

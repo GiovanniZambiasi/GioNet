@@ -64,6 +64,7 @@
     <ClCompile Include="src\BufferSerializationTests.cpp" />
     <ClCompile Include="src\BufferTests.cpp" />
     <ClCompile Include="src\PacketTests.cpp" />
+    <ClCompile Include="src\ServerTests.cpp" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

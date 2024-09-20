@@ -5,13 +5,9 @@
 
 GioNet::Client::Client(const NetAddress& serverAddress)
     : serverAddress(serverAddress),
-      socket(std::make_shared<Socket>(serverAddress, CommunicationProtocols::UDP))
+      socket(std::make_shared<Socket>(serverAddress, CommunicationProtocols::UDP)),
+      connectionToServer(serverAddress, socket)
 {
-}
-
-void GioNet::Client::RunListenThread()
-{
-    listenThread = std::jthread{&Client::ListenThreadImpl, this};
 }
 
 GioNet::Client::~Client()
@@ -25,8 +21,9 @@ void GioNet::Client::Start()
     {
         GIONET_LOG("Starting UDP client...\n");
         // UDP Client needs to initiate communication before attempting to listen from socket
-        Send({"Greetings!"});
-        RunListenThread();
+        socket->SendTo({Packet{Packet::Types::Ping}});
+        sendThread = std::jthread{&Client::SendThreadImpl, this};
+        listenThread = std::jthread{&Client::ListenThreadImpl, this};
     }
     else
     {
@@ -43,9 +40,10 @@ void GioNet::Client::Stop()
     }
 
     listenThread.request_stop();
+    sendThread.request_stop();
 }
 
-void GioNet::Client::Send(const Buffer& buffer)
+void GioNet::Client::Send(Buffer&& buffer, bool reliable)
 {
     if(!IsConnected())
     {
@@ -53,7 +51,12 @@ void GioNet::Client::Send(const Buffer& buffer)
         return;
     }
 
-    GetSocketChecked().SendTo(buffer);
+    connectionToServer.Schedule(
+        {
+            Packet::Types::Data,
+            reliable ? Packet::Flags::Reliable : Packet::Flags::None,
+            std::move(buffer)
+        });
 }
 
 bool GioNet::Client::IsConnected() const
@@ -84,12 +87,31 @@ void GioNet::Client::ListenThreadImpl()
         
         if (received)
         {
-            InvokeDataReceived(std::move(*received));
+            Packet packet{received->Read<Packet>()};
             received.reset();
+            connectionToServer.Received(std::move(packet));
+
+            while (std::optional<Packet> incomingPacket = connectionToServer.GetReadyIncomingPacket())
+            {
+                InvokeDataReceived(std::move(incomingPacket->payload));
+            }
         }
         else
         {
             Stop();
+        }
+    }
+}
+
+void GioNet::Client::SendThreadImpl()
+{
+    while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
+    {
+        while (std::optional<Packet> outgoingPacket = connectionToServer.GetReadyOutgoingPacket())
+        {
+            Buffer b{};
+            b.Write(outgoingPacket.value());
+            socket->SendTo(b);
         }
     }
 }

@@ -15,6 +15,11 @@ GioNet::Buffer::Buffer(std::string_view view)
     Write(view);
 }
 
+GioNet::Buffer::Buffer(const Packet& packet)
+{
+    Write(packet);
+}
+
 bool GioNet::Buffer::operator==(const Buffer& rhs) const
 {
     if(Length() != rhs.Length())
@@ -110,13 +115,8 @@ template<>
 void GioNet::Buffer::Write(const Packet& val)
 {
     Write<Packet::HeaderType>(val.header);
-
-    if(Packet::HasFlags(val.header, Packet::Reliable))
-    {
-        assert(val.id.has_value());
-        Write<Packet::IdType>(val.id.value());
-    }
-    
+    Write<Packet::AckHeaderType>(val.ack);
+    Write<Packet::IdType>(val.id);
     Write(val.payload);
 }
 
@@ -125,12 +125,8 @@ GioNet::Packet GioNet::Buffer::Read()
 {
     Packet packet{};
     packet.header = Read<Packet::HeaderType>();
-
-    if(packet.HasFlags(Packet::Reliable))
-    {
-        packet.id = Read<Packet::IdType>();
-    }
-    
+    packet.ack = Read<Packet::AckHeaderType>();
+    packet.id = Read<Packet::IdType>();
     packet.payload = Read<Buffer>();
     return packet;
 }

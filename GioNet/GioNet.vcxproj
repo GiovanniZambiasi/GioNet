@@ -26,6 +26,7 @@
     <ClCompile Include="src\NetSystem.cpp" />
     <ClCompile Include="src\Packet.cpp" />
     <ClCompile Include="src\Peer.cpp" />
+    <ClCompile Include="src\Connection.cpp" />
     <ClCompile Include="src\Server.cpp" />
     <ClCompile Include="src\Socket.cpp" />
   </ItemGroup>
@@ -37,6 +38,7 @@
     <ClInclude Include="inc\Logger.h" />
     <ClInclude Include="inc\NetSystem.h" />
     <ClInclude Include="inc\Packet.h" />
+    <ClInclude Include="inc\Connection.h" />
     <ClInclude Include="inc\Peer.h" />
     <ClInclude Include="inc\Server.h" />
     <ClInclude Include="inc\Socket.h" />

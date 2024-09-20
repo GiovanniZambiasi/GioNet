@@ -4,6 +4,8 @@
 #include <cassert>
 #include <format>
 
+#include "Core.h"
+
 namespace
 {
     constexpr uint8_t TypeMask     = 0b00001111;
@@ -17,24 +19,24 @@ namespace
 
 bool GioNet::Packet::HasFlags(HeaderType header, Flags flags)
 {
-    uint8_t flagBits = flags;
+    uint8_t flagBits = static_cast<uint8_t>(flags);
     assert(flagBits <= MaxViableFlags);
     return (header & (flagBits << FlagsOffset)) != 0;
 }
 
-GioNet::Packet::Packet(Types type, std::initializer_list<Flags> flags, Buffer&& payload)
-    :payload(std::move(payload))
+GioNet::Packet::Packet(Types type,  Flags flags, Buffer&& payload)
+    : payload(std::move(payload))
 {
     uint8_t typeBits = static_cast<uint8_t>(type);
     assert(typeBits <= MaxViableType);
     header |= typeBits << TypeOffset;
 
-    Flags packedFlags{0};
-    for (Flags flag : flags)
+    SetFlags(flags, true);
+
+    if(type == Types::Ping && payload.Length() > 0)
     {
-        packedFlags |= flag;
+        GIONET_LOG("[ERROR]: Packet type set to ping, but payload length is not zero. Data will not be serialized");
     }
-    SetFlag(packedFlags, true);
 }
 
 GioNet::Packet::Types GioNet::Packet::GetType() const
@@ -49,9 +51,9 @@ GioNet::Packet::Flags GioNet::Packet::GetFlags() const
     return static_cast<Flags>(flagsBits);
 }
 
-void GioNet::Packet::SetFlag(Flags flag, bool enabled)
+void GioNet::Packet::SetFlags(Flags flag, bool enabled)
 {
-    uint8_t flagBits = flag;
+    uint8_t flagBits = static_cast<uint8_t>(flag);
     assert(flagBits <= MaxViableFlags);
     
     if(enabled)

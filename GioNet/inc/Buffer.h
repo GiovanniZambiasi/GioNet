@@ -13,6 +13,8 @@
 
 namespace GioNet
 {
+    struct Packet;
+    
     /**
      * Network serializable buffer
      */
@@ -29,6 +31,8 @@ namespace GioNet
         Buffer(const void* data, int length);
 
         Buffer(std::string_view view);
+
+        Buffer(const Packet& packet);
 
         const int8_t* Data() const { return payload.data(); }
         

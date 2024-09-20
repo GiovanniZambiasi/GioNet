@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "Buffer.h"
+#include "Connection.h"
 #include "Socket.h"
 
 namespace GioNet
@@ -21,7 +22,11 @@ namespace GioNet
         
         std::shared_ptr<Socket> socket{};
 
+        Connection connectionToServer;
+
         std::jthread listenThread{};
+        
+        std::jthread sendThread{};
 
         DataReceivedDelegate dataReceived{};
         
@@ -34,7 +39,7 @@ namespace GioNet
 
         void Stop();
 
-        void Send(const Buffer& buffer);
+        void Send(Buffer&& buffer, bool reliable = true);
         
         bool IsConnected() const;
 
@@ -49,11 +54,11 @@ namespace GioNet
         std::shared_ptr<Socket> GetSocket(){ return socket;}
         
     private:
-        void RunListenThread();
+        void ListenThreadImpl();
+        
+        void SendThreadImpl();
 
         void InvokeDataReceived(Buffer&& buffer);
-        
-        void ListenThreadImpl();
         
     };    
 }

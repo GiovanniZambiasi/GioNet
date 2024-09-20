@@ -10,38 +10,42 @@ namespace GioNet
     {
         using HeaderType = uint8_t;
         using IdType = uint16_t;
+        using AckHeaderType = uint32_t;
+
+        constexpr static IdType InvalidId = 0;
         
         enum class Types : uint8_t
         {
-            Ping = 0,
-            Ack,
-            Connect,
-            Data
+            Connect = 0,
+            Data,
+            Ping,
         };
 
-        enum Flags : uint8_t
+        enum class Flags : uint8_t
         {
+            None = 0,
             Reliable = 0b1,
-            Fragmented = 0b10,
         };
 
         HeaderType header{0};
 
-        std::optional<IdType> id{};
+        AckHeaderType ack{0};
         
+        IdType id{InvalidId};
+
         Buffer payload{};
 
         static bool HasFlags(HeaderType header, Flags flags);
 
         Packet() = default;
 
-        Packet(Types type, std::initializer_list<Flags> flags = {}, Buffer&& payload = {});
+        Packet(Types type, Flags flags = Flags::None, Buffer&& payload = {});
 
         Types GetType() const;
 
         Flags GetFlags() const;
 
-        void SetFlag(Flags flag, bool enabled);
+        void SetFlags(Flags flag, bool enabled);
 
         bool HasFlags(Flags flags) const;
 

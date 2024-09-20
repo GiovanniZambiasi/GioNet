@@ -70,22 +70,22 @@ TEST(BufferSerializationTests, packet)
     DataSerializationTest<GioNet::Packet> test{};
     GioNet::Packet packet
     {
-        GioNet::Packet::Types::Ping,
-        { GioNet::Packet::Flags::Fragmented, GioNet::Packet::Flags::Reliable, }
+        GioNet::Packet::Types::Data,
+        GioNet::Packet::Flags::Reliable,
     };
     packet.id = 0;
     test.ConstructBufferAndTest(packet);
 
     packet = GioNet::Packet{
         GioNet::Packet::Types::Data,
-        {},
+        GioNet::Packet::Flags::None,
         {"Payload!"}
     };
     test.ConstructBufferAndTest(packet);
 
     packet = GioNet::Packet{
-        GioNet::Packet::Types::Ack,
-        {GioNet::Packet::Flags::Reliable, GioNet::Packet::Flags::Fragmented},
+        GioNet::Packet::Types::Connect,
+        GioNet::Packet::Flags::Reliable,
         {"Other payload!"}
     };
     packet.id = ~0;
@@ -95,7 +95,7 @@ TEST(BufferSerializationTests, packet)
 TEST(BufferSerializationTests, packet_no_id)
 {
     GioNet::Buffer data{};
-    GioNet::Packet p{GioNet::Packet::Types::Connect, {GioNet::Packet::Reliable}};
+    GioNet::Packet p{GioNet::Packet::Types::Connect, GioNet::Packet::Flags::Reliable};
 
     auto statement = [&data, &p]
     {
