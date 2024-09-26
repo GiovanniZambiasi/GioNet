@@ -109,15 +109,15 @@ public:
 
     void Run()
     {
-        sv->BindDataReceived([this](const GioNet::Peer& peer, GioNet::Buffer&& buff)
+        sv->BindDataReceived([this](const GioNet::Connection& peer, GioNet::Buffer&& buff)
         {
             DataReceived(peer, std::move(buff));
         });
-        sv->BindPeerConnected([this](const GioNet::Peer& peer)
+        sv->BindPeerConnected([this](const GioNet::Connection& peer)
         {
             PeerConnected(peer);
         });
-        sv->BindPeerDisconnected([this](const GioNet::Peer& peer)
+        sv->BindPeerDisconnected([this](const GioNet::Connection& peer)
         {
             PeerDisconnected(peer);
         });
@@ -131,19 +131,19 @@ public:
         }
     }
 
-    void DataReceived(const GioNet::Peer& peer, GioNet::Buffer&& buff)
+    void DataReceived(const GioNet::Connection& peer, GioNet::Buffer&& buff)
     {
         std::string message = buff.Read<std::string>();
         PrintMessage(message);
-        sv->Broadcast({message}, { peer });
+        sv->Broadcast({message}, true, { peer.GetAddress() });
     }
 
-    void PeerConnected(const GioNet::Peer& peer)
+    void PeerConnected(const GioNet::Connection& peer)
     {
         Send("New peer connected...");
     }
 
-    void PeerDisconnected(const GioNet::Peer& peer)
+    void PeerDisconnected(const GioNet::Connection& peer)
     {
         Send("Peer connected...");
     }

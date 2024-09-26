@@ -22,7 +22,7 @@ namespace GioNet
         
         std::shared_ptr<Socket> socket{};
 
-        Connection connectionToServer;
+        std::shared_ptr<Connection> connectionToServer;
 
         std::jthread listenThread{};
         
@@ -54,11 +54,12 @@ namespace GioNet
         std::shared_ptr<Socket> GetSocket(){ return socket;}
         
     private:
-        void ListenThreadImpl();
+        void ListenThread();
         
-        void SendThreadImpl();
+        void ProcessIncomingPacket();
+        
+        void SendThread();
 
         void InvokeDataReceived(Buffer&& buffer);
-        
     };    
 }

@@ -2,8 +2,8 @@
 
 #include "Socket.h"
 
-GioNet::Connection::Connection(const NetAddress& address, const std::shared_ptr<Socket>& socket)
-    : address(address), socket(socket)
+GioNet::Connection::Connection(const NetAddress& address)
+    : address(address)
 {
 }
 
@@ -76,15 +76,12 @@ std::optional<GioNet::Packet> GioNet::Connection::GetReadyIncomingPacket()
     return {std::move(packet)};
 }
 
+std::string GioNet::Connection::ToString() const
+{
+    return address.ToString();
+}
+
 GioNet::Packet::IdType GioNet::Connection::GetIndexForNextPacket()
 {
     return ++localPacketIndex;
-}
-
-void GioNet::Connection::BuildAckHeaderAndSend(Packet packet)
-{
-
-    Buffer b{};
-    b.Write(packet);
-    socket->SendTo(b, address);
 }

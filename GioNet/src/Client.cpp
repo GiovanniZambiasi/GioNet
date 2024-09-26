@@ -6,7 +6,7 @@
 GioNet::Client::Client(const NetAddress& serverAddress)
     : serverAddress(serverAddress),
       socket(std::make_shared<Socket>(serverAddress, CommunicationProtocols::UDP)),
-      connectionToServer(serverAddress, socket)
+      connectionToServer(std::make_shared<Connection>(serverAddress))
 {
 }
 
@@ -22,8 +22,8 @@ void GioNet::Client::Start()
         GIONET_LOG("Starting UDP client...\n");
         // UDP Client needs to initiate communication before attempting to listen from socket
         socket->SendTo({Packet{Packet::Types::Ping}});
-        sendThread = std::jthread{&Client::SendThreadImpl, this};
-        listenThread = std::jthread{&Client::ListenThreadImpl, this};
+        sendThread = std::jthread{&Client::SendThread, this};
+        listenThread = std::jthread{&Client::ListenThread, this};
     }
     else
     {
@@ -51,7 +51,7 @@ void GioNet::Client::Send(Buffer&& buffer, bool reliable)
         return;
     }
 
-    connectionToServer.Schedule(
+    connectionToServer->Schedule(
         {
             Packet::Types::Data,
             reliable ? Packet::Flags::Reliable : Packet::Flags::None,
@@ -75,12 +75,13 @@ void GioNet::Client::InvokeDataReceived(Buffer&& buffer)
         dataReceived(std::move(buffer));
 }
 
-void GioNet::Client::ListenThreadImpl()
+void GioNet::Client::ListenThread()
 {
-    while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
+    std::shared_ptr socketCopy{socket};
+    while (socketCopy && socketCopy->IsValid() && !listenThread.get_stop_token().stop_requested())
     {
         NetAddress addr{};
-        std::optional<Buffer> received = socket->ReceiveFrom(&addr);
+        std::optional<Buffer> received = socketCopy->ReceiveFrom(&addr);
 
         if(addr != serverAddress)
             continue;
@@ -89,12 +90,9 @@ void GioNet::Client::ListenThreadImpl()
         {
             Packet packet{received->Read<Packet>()};
             received.reset();
-            connectionToServer.Received(std::move(packet));
+            connectionToServer->Received(std::move(packet));
 
-            while (std::optional<Packet> incomingPacket = connectionToServer.GetReadyIncomingPacket())
-            {
-                InvokeDataReceived(std::move(incomingPacket->payload));
-            }
+            ProcessIncomingPacket();
         }
         else
         {
@@ -103,15 +101,24 @@ void GioNet::Client::ListenThreadImpl()
     }
 }
 
-void GioNet::Client::SendThreadImpl()
+void GioNet::Client::ProcessIncomingPacket()
 {
-    while (socket && socket->IsValid() && !listenThread.get_stop_token().stop_requested())
+    while (std::optional<Packet> incomingPacket = connectionToServer->GetReadyIncomingPacket())
     {
-        while (std::optional<Packet> outgoingPacket = connectionToServer.GetReadyOutgoingPacket())
+        InvokeDataReceived(std::move(incomingPacket->payload));
+    }
+}
+
+void GioNet::Client::SendThread()
+{
+    std::shared_ptr socketCopy{socket};
+    while (socketCopy && socketCopy->IsValid() && !listenThread.get_stop_token().stop_requested())
+    {
+        while (std::optional<Packet> outgoingPacket = connectionToServer->GetReadyOutgoingPacket())
         {
             Buffer b{};
             b.Write(outgoingPacket.value());
-            socket->SendTo(b);
+            socketCopy->SendTo(b);
         }
     }
 }

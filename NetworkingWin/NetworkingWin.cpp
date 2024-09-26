@@ -15,14 +15,15 @@ void RunServer()
     auto& sys = GioNet::NetSystem::Get();
     std::shared_ptr<GioNet::Server> server = sys.CreateServer(GIONET_DEFAULT_PORT);
     server->Start();
-    server->BindDataReceived([](const GioNet::Peer& peer, GioNet::Buffer&& buff)
+    server->BindDataReceived([](const GioNet::Connection& peer, GioNet::Buffer&& buff)
     {
-        printf("Data received from peer %s\n", buff.Data());
-
+        std::string message{buff.Read<std::string>()};
+        printf("Data received from peer %s\n", message.c_str());
     });
     while(server && server->IsRunning())
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        server->Broadcast({"Ping!"});
     }
 }
 
@@ -40,13 +41,14 @@ bool RunClient()
     client->Start();
     client->BindDataReceived([](GioNet::Buffer&& buffer)
     {
-        printf("Data received from server: %s\n", buffer.Data());
+        std::string message{buffer.Read<std::string>()};
+        printf("Data received from server: %s\n", message.c_str());
     });
 
     while(client && client->IsConnected())
     {
         client->Send({"Ping!"});
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     return true;
 }

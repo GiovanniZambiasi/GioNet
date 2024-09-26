@@ -7,7 +7,7 @@
 
 #include "Buffer.h"
 #include "Core.h"
-#include "Peer.h"
+#include "Connection.h"
 
 namespace GioNet
 {
@@ -16,24 +16,26 @@ namespace GioNet
     class Server
     {
     public:
-        using DataReceivedDelegate = std::function<void(const Peer&, Buffer&&)>;
+        using DataReceivedDelegate = std::function<void(const Connection&, Buffer&&)>;
         
-        using PeerDelegate = std::function<void(const Peer&)>;
+        using ConnectionDelegate = std::function<void(const Connection&)>;
         
     private:
-        std::shared_ptr<Socket> listenSocket{};
+        std::shared_ptr<Socket> socket{};
 
         std::jthread listenThread{};
         
-        std::unordered_map<NetAddress, Peer> peers{};
+        std::jthread sendThread{};
+        
+        std::unordered_map<NetAddress, std::shared_ptr<Connection>> peers{};
 
         mutable std::shared_mutex peersMutex{};
 
         DataReceivedDelegate dataReceivedDelegate{};
 
-        PeerDelegate peerConnectedDelegate{};
+        ConnectionDelegate peerConnectedDelegate{};
         
-        PeerDelegate peerDisconnectedDelegate{};
+        ConnectionDelegate peerDisconnectedDelegate{};
         
     public:
         GIONET_NOCOPY(Server)
@@ -48,41 +50,43 @@ namespace GioNet
 
         void BindDataReceived(DataReceivedDelegate&& delegate);
         
-        void BindPeerConnected(PeerDelegate&& delegate);
+        void BindPeerConnected(ConnectionDelegate&& delegate);
         
-        void BindPeerDisconnected(PeerDelegate&& delegate);
+        void BindPeerDisconnected(ConnectionDelegate&& delegate);
         
-        void Broadcast(const Buffer& buffer, const std::unordered_set<Peer>& except = {});
+        void Broadcast(const Buffer& buffer, bool reliable = true, const std::unordered_set<NetAddress>& except = {});
 
-        void Send(const Buffer& buffer, const Peer& peer);
+        void Send(const Buffer& buffer, std::shared_ptr<Connection> peer, bool reliable = true);
 
         Socket& GetSocketChecked();
 
-        std::shared_ptr<Socket> GetSocket() { return listenSocket; }
+        std::shared_ptr<Socket> GetSocket() { return socket; }
 
         /**
          * @param outPeers Populates input with list of peers at the time of calling the method. Doesn't return the actual
          * dict for thread safety.
          */
-        void GetPeers(std::vector<Peer>& outPeers) const;
+        void GetPeers(std::vector<std::shared_ptr<Connection>>& outPeers) const;
 
         bool HasPeer(const NetAddress& address) const;
 
-        const Peer* TryGetPeer(const NetAddress& address) const;
+        int GetConnectedPeerCout() const;
+
+        std::shared_ptr<Connection> TryGetPeer(const NetAddress& address) const;
         
         bool IsRunning() const;
 
     private:
-        void RunListenThread();
+        void ListenThread();
+
+        void ProcessReceivedPackets();
+
+        void SendThread();
         
-        void AddPeer(const Peer& peer);
+        std::shared_ptr<Connection> AddPeer(const NetAddress& address);
 
-        void RemovePeer(const Peer& peer);
+        void RemovePeer(std::shared_ptr<Connection> peer);
 
-        virtual void OnPostPeerAdded(const Peer& peer) { }
-
-        virtual void OnPrePeerRemoved(const Peer& peer) { }
-
-        void InvokeDataReceived(const Peer& peer, Buffer&& buffer);
+        void InvokeDataReceived(const Connection& peer, Buffer&& buffer);
     };
 }

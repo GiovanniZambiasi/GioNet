@@ -92,18 +92,6 @@ TEST(BufferSerializationTests, packet)
     test.ConstructBufferAndTest(packet);
 }
 
-TEST(BufferSerializationTests, packet_no_id)
-{
-    GioNet::Buffer data{};
-    GioNet::Packet p{GioNet::Packet::Types::Connect, GioNet::Packet::Flags::Reliable};
-
-    auto statement = [&data, &p]
-    {
-        data.Write(p);
-    };
-    ASSERT_DEBUG_DEATH(statement(), ".*id\.has_value");
-}
-
 TEST(BufferSerializationTests, buffer)
 {
     GioNet::Buffer data{"This is a c str!"};

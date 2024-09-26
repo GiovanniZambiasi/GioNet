@@ -3,7 +3,6 @@
 #include <queue>
 #include <set>
 #include <shared_mutex>
-#include <thread>
 
 #include "Core.h"
 #include "Packet.h"
@@ -20,8 +19,6 @@ namespace GioNet
     {
         NetAddress address{};
 
-        std::shared_ptr<Socket> socket{};
-
         std::map<Packet::IdType, Packet> sentReliablePackets{};
 
         std::queue<Packet> readyOutgoingPackets{};
@@ -30,7 +27,7 @@ namespace GioNet
 
         Packet::IdType localPacketIndex{Packet::InvalidId};
 
-        Packet::IdType lastProcessedPacketIndex{0};
+        Packet::IdType lastProcessedPacketIndex{Packet::InvalidId};
         
         std::map<Packet::IdType, Packet> receivedReliablePackets{};
 
@@ -38,11 +35,13 @@ namespace GioNet
 
         std::shared_mutex incomingPacketLock{};
 
-        Packet::IdType remotePacketIndex{};
+        Packet::IdType remotePacketIndex{Packet::InvalidId};
 
     public:
-        Connection(const NetAddress& address, const std::shared_ptr<Socket>& socket);
+        Connection(const NetAddress& address);
 
+        Connection() = default;
+        
         void Schedule(Packet&& packet);
 
         std::optional<Packet> GetReadyOutgoingPacket();
@@ -51,9 +50,11 @@ namespace GioNet
 
         std::optional<Packet> GetReadyIncomingPacket();
 
+        std::string ToString() const;
+
+        const NetAddress& GetAddress() const { return address; }
+
     private:
         Packet::IdType GetIndexForNextPacket();
-
-        void BuildAckHeaderAndSend(Packet packet);
     };
 }
