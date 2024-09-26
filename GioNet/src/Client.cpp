@@ -1,6 +1,7 @@
 ﻿#include "Client.h"
 
 #include "Buffer.h"
+#include "Message.h"
 #include "Socket.h"
 
 GioNet::Client::Client(const NetAddress& serverAddress)
@@ -43,7 +44,7 @@ void GioNet::Client::Stop()
     sendThread.request_stop();
 }
 
-void GioNet::Client::Send(Buffer&& buffer, bool reliable)
+void GioNet::Client::Send(Message&& message)
 {
     if(!IsConnected())
     {
@@ -54,8 +55,8 @@ void GioNet::Client::Send(Buffer&& buffer, bool reliable)
     connectionToServer->Schedule(
         {
             Packet::Types::Data,
-            reliable ? Packet::Flags::Reliable : Packet::Flags::None,
-            std::move(buffer)
+            message.reliable ? Packet::Flags::Reliable : Packet::Flags::None,
+            std::move(message.data)
         });
 }
 

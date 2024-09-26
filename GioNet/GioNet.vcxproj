@@ -23,6 +23,7 @@
     <ClCompile Include="src\Client.cpp" />
     <ClCompile Include="src\Core.cpp" />
     <ClCompile Include="src\Logger.cpp" />
+    <ClCompile Include="src\Message.cpp" />
     <ClCompile Include="src\NetSystem.cpp" />
     <ClCompile Include="src\Packet.cpp" />
     <ClCompile Include="src\Peer.cpp" />
@@ -36,6 +37,7 @@
     <ClInclude Include="inc\GioNet.h" />
     <ClInclude Include="inc\Core.h" />
     <ClInclude Include="inc\Logger.h" />
+    <ClInclude Include="inc\Message.h" />
     <ClInclude Include="inc\NetSystem.h" />
     <ClInclude Include="inc\Packet.h" />
     <ClInclude Include="inc\Connection.h" />

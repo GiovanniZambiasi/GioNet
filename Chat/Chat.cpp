@@ -135,7 +135,7 @@ public:
     {
         std::string message = buff.Read<std::string>();
         PrintMessage(message);
-        sv->Broadcast({message}, true, { peer.GetAddress() });
+        sv->Broadcast({GioNet::Buffer{message}}, { peer.GetAddress() });
     }
 
     void PeerConnected(const GioNet::Connection& peer)
@@ -157,7 +157,7 @@ public:
         }
         
         std::string formattedMessage = Format(message);
-        sv->Broadcast({formattedMessage});
+        sv->Broadcast({GioNet::Buffer{formattedMessage}});
     }
 };
 
@@ -199,7 +199,7 @@ public:
         {
             PrintMessageHeader(username);
             std::string input{ReadInput()};
-            client->Send({Format(input)});
+            client->Send({GioNet::Buffer{Format(input)}});
         }
     }
 

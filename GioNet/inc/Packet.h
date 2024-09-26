@@ -28,11 +28,11 @@ namespace GioNet
         };
 
         HeaderType header{0};
-
-        AckHeaderType ack{0};
         
         IdType id{InvalidId};
 
+        AckHeaderType ack{0};
+        
         Buffer payload{};
 
         static bool HasFlags(HeaderType header, Flags flags);

@@ -9,6 +9,7 @@
 
 namespace GioNet
 {
+    struct Message;
     struct NetAddress;
     class Socket;
 
@@ -39,7 +40,7 @@ namespace GioNet
 
         void Stop();
 
-        void Send(Buffer&& buffer, bool reliable = true);
+        void Send(Message&& message);
         
         bool IsConnected() const;
 

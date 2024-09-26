@@ -5,3 +5,4 @@
 #include "Server.h"
 #include "Client.h"
 #include "Packet.h"
+#include "Message.h"

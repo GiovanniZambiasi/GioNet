@@ -23,7 +23,7 @@ void RunServer()
     while(server && server->IsRunning())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        server->Broadcast({"Ping!"});
+        server->Broadcast({GioNet::Buffer{"Ping!"}});
     }
 }
 
@@ -47,7 +47,7 @@ bool RunClient()
 
     while(client && client->IsConnected())
     {
-        client->Send({"Ping!"});
+        client->Send({GioNet::Buffer{"Ping!"}});
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     return true;

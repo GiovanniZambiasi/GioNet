@@ -11,6 +11,7 @@
 
 namespace GioNet
 {
+    struct Message;
     class Socket;
     
     class Server
@@ -54,9 +55,9 @@ namespace GioNet
         
         void BindPeerDisconnected(ConnectionDelegate&& delegate);
         
-        void Broadcast(const Buffer& buffer, bool reliable = true, const std::unordered_set<NetAddress>& except = {});
+        void Broadcast(const Message& message, const std::unordered_set<NetAddress>& except = {});
 
-        void Send(const Buffer& buffer, std::shared_ptr<Connection> peer, bool reliable = true);
+        void Send(Message&& message, std::shared_ptr<Connection> peer);
 
         Socket& GetSocketChecked();
 

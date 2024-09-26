@@ -1,6 +1,8 @@
 ﻿#include "Server.h"
 #include <ranges>
 #include <string>
+
+#include "Message.h"
 #include "Socket.h"
 
 GioNet::Server::Server(unsigned short port)
@@ -82,7 +84,7 @@ bool GioNet::Server::IsRunning() const
     return socket && socket->IsValid();
 }
 
-void GioNet::Server::Broadcast(const Buffer& buffer, bool reliable, const std::unordered_set<NetAddress>& except)
+void GioNet::Server::Broadcast(const Message& message, const std::unordered_set<NetAddress>& except)
 {
     std::vector<std::shared_ptr<Connection>> peersCopy{};
     GetPeers(peersCopy);
@@ -94,17 +96,17 @@ void GioNet::Server::Broadcast(const Buffer& buffer, bool reliable, const std::u
         if(except.contains(peer->GetAddress()))
             continue;
 
-        Send(buffer, peer, reliable);
+        Send(Message{message}, peer);
     }
 }
 
-void GioNet::Server::Send(const Buffer& buffer, std::shared_ptr<Connection> peer, bool reliable)
+void GioNet::Server::Send(Message&& message, std::shared_ptr<Connection> peer)
 {
     peer->Schedule(
         Packet{
             Packet::Types::Data,
-            reliable ? Packet::Flags::Reliable : Packet::Flags::None,
-            Buffer{buffer}
+            message.reliable ? Packet::Flags::Reliable : Packet::Flags::None,
+            Buffer{message.data}
     });
 }
 
