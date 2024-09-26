@@ -11,6 +11,24 @@ namespace GioNet
 {
     class Socket;
 
+    /**
+     * Represents a stream of packets, either outgoing or incoming.
+     * <br>
+     * This is a helper type to encapsulate common information needed by the reliability layer
+     */
+    struct PacketStream
+    {
+        std::map<Packet::IdType, Packet> reliablePackets{};
+
+        std::queue<Packet> readyPackets{};
+        
+        std::shared_mutex lock{};
+
+        Packet::IdType sequenceNumber{Packet::InvalidId};
+
+        std::optional<Packet> PopNextReadyPacket();
+    };
+
     // Enqueues all received packets. If unreliable, processes them right away. If not, buffers them until the proper
     // sequence of packets is received.
     // ..
@@ -19,23 +37,9 @@ namespace GioNet
     {
         NetAddress address{};
 
-        std::map<Packet::IdType, Packet> sentReliablePackets{};
+        PacketStream outgoing{};
 
-        std::queue<Packet> readyOutgoingPackets{};
-        
-        std::shared_mutex outgoingPacketLock{};
-
-        Packet::IdType localPacketIndex{Packet::InvalidId};
-
-        Packet::IdType lastProcessedPacketIndex{Packet::InvalidId};
-        
-        std::map<Packet::IdType, Packet> receivedReliablePackets{};
-
-        std::queue<Packet> readyIncomingPackets{};
-
-        std::shared_mutex incomingPacketLock{};
-
-        Packet::IdType remotePacketIndex{Packet::InvalidId};
+        PacketStream incoming{};
 
     public:
         Connection(const NetAddress& address);

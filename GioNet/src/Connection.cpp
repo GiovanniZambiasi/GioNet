@@ -2,6 +2,18 @@
 
 #include "Socket.h"
 
+std::optional<GioNet::Packet> GioNet::PacketStream::PopNextReadyPacket()
+{
+    std::scoped_lock _{lock};
+    
+    if(readyPackets.empty())
+        return {};
+
+    Packet packet = std::move(readyPackets.front());
+    readyPackets.pop();
+    return {std::move(packet)};
+}
+
 GioNet::Connection::Connection(const NetAddress& address)
     : address(address)
 {
@@ -9,13 +21,13 @@ GioNet::Connection::Connection(const NetAddress& address)
 
 void GioNet::Connection::Schedule(Packet&& packet)
 {
-    std::scoped_lock _{outgoingPacketLock};
+    std::scoped_lock _{outgoing.lock};
     
     if(packet.HasFlags(Packet::Flags::Reliable))
     {
         Packet::IdType index = GetIndexForNextPacket();
         
-        if(sentReliablePackets.contains(index))
+        if(outgoing.reliablePackets.contains(index))
         {
             // TODO - Put packets in an aux queue until indices are available again? 
             GIONET_LOG("[ERROR]: Packet already exists with id %i", index);
@@ -23,57 +35,46 @@ void GioNet::Connection::Schedule(Packet&& packet)
         }
         
         packet.id = index;
-        sentReliablePackets[index] = packet;
-        readyOutgoingPackets.push(std::move(packet));
+        outgoing.reliablePackets[index] = packet;
     }
-    else
-    {
-        readyOutgoingPackets.push(std::move(packet));
-    }
+    
+    outgoing.readyPackets.push(std::move(packet));
 }
 
 std::optional<GioNet::Packet> GioNet::Connection::GetReadyOutgoingPacket()
 {
-    std::scoped_lock _{outgoingPacketLock};
-    
-    if(readyOutgoingPackets.empty())
-        return {};
+    std::optional<Packet> packet = outgoing.PopNextReadyPacket();
 
-    Packet packet = std::move(readyOutgoingPackets.front());
-    readyOutgoingPackets.pop();
-    // TODO - Add ack header
-    return {std::move(packet)};
+    if(packet)
+    {
+        // TODO - Add ack header
+        
+    }
+    return packet;
 }
 
 void GioNet::Connection::Received(Packet&& packet)
 {
-    std::scoped_lock _{incomingPacketLock};
+    std::scoped_lock _{incoming.lock};
     // TODO - Check for acks, remove unnecessary outgoing packets
     
     if(packet.HasFlags(Packet::Flags::Reliable))
     {
-        if(receivedReliablePackets.contains(packet.id))
+        if(incoming.reliablePackets.contains(packet.id))
             return;
 
-        readyIncomingPackets.push(packet);
-        receivedReliablePackets[packet.id] = std::move(packet);
+        incoming.readyPackets.push(packet);
+        incoming.reliablePackets[packet.id] = std::move(packet);
     }
     else
     {
-        readyIncomingPackets.push(std::move(packet));
+        incoming.readyPackets.push(std::move(packet));
     }
 }
 
 std::optional<GioNet::Packet> GioNet::Connection::GetReadyIncomingPacket()
 {
-    std::scoped_lock _{incomingPacketLock};
-    
-    if(readyIncomingPackets.empty())
-        return {};
-
-    Packet packet = std::move(readyIncomingPackets.front());
-    readyIncomingPackets.pop();
-    return {std::move(packet)};
+    return incoming.PopNextReadyPacket();
 }
 
 std::string GioNet::Connection::ToString() const
@@ -83,5 +84,5 @@ std::string GioNet::Connection::ToString() const
 
 GioNet::Packet::IdType GioNet::Connection::GetIndexForNextPacket()
 {
-    return ++localPacketIndex;
+    return ++outgoing.sequenceNumber;
 }
