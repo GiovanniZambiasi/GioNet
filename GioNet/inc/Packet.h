@@ -13,6 +13,7 @@ namespace GioNet
         using AckHeaderType = uint32_t;
 
         constexpr static IdType InvalidId = 0;
+        constexpr static IdType MaxPossibleId = ~0;
         
         enum class Types : uint8_t
         {
@@ -31,7 +32,9 @@ namespace GioNet
         
         IdType id{InvalidId};
 
-        AckHeaderType ack{0};
+        IdType ackId{InvalidId};
+        
+        AckHeaderType ackBitset{0};
         
         Buffer payload{};
 

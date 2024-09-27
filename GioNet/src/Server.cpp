@@ -227,7 +227,7 @@ void GioNet::Server::ProcessReceivedPackets()
         std::shared_ptr<Connection> peer = pair.second;
         assert(peer);
 
-        while (std::optional<Packet> packet = peer->GetReadyIncomingPacket())
+        while (std::optional<Packet> packet = peer->PopReadyIncomingPacket())
         {
             assert(packet);
             Packet& packetRef = *packet;
@@ -249,7 +249,7 @@ void GioNet::Server::SendThread()
         for(std::shared_ptr<Connection>& peer : connectedPeers)
         {
             NetAddress address = peer->GetAddress();
-            while (std::optional<Packet> outgoingPacket = peer->GetReadyOutgoingPacket())
+            while (std::optional<Packet> outgoingPacket = peer->PopReadyOutgoingPacket())
             {
                 Buffer b{};
                 b.Write(outgoingPacket.value());

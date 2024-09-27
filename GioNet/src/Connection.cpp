@@ -1,5 +1,7 @@
 ﻿#include "Connection.h"
 
+#include <chrono>
+
 #include "Socket.h"
 
 std::optional<GioNet::Packet> GioNet::PacketStream::PopNextReadyPacket()
@@ -41,30 +43,32 @@ void GioNet::Connection::Schedule(Packet&& packet)
     outgoing.readyPackets.push(std::move(packet));
 }
 
-std::optional<GioNet::Packet> GioNet::Connection::GetReadyOutgoingPacket()
+std::optional<GioNet::Packet> GioNet::Connection::PopReadyOutgoingPacket()
 {
     std::optional<Packet> packet = outgoing.PopNextReadyPacket();
 
     if(packet)
     {
         // TODO - Add ack header
-        
     }
+        
     return packet;
 }
 
 void GioNet::Connection::Received(Packet&& packet)
 {
     std::scoped_lock _{incoming.lock};
-    // TODO - Check for acks, remove unnecessary outgoing packets
+    
+    // TODO - Check incoming acks, remove unnecessary outgoing packets
     
     if(packet.HasFlags(Packet::Flags::Reliable))
     {
         if(incoming.reliablePackets.contains(packet.id))
             return;
 
-        incoming.readyPackets.push(packet);
-        incoming.reliablePackets[packet.id] = std::move(packet);
+        auto packetId = packet.id;
+        incoming.reliablePackets[packetId] = std::move(packet);
+        EnqueueProcessablePackets();
     }
     else
     {
@@ -72,9 +76,14 @@ void GioNet::Connection::Received(Packet&& packet)
     }
 }
 
-std::optional<GioNet::Packet> GioNet::Connection::GetReadyIncomingPacket()
+std::optional<GioNet::Packet> GioNet::Connection::PopReadyIncomingPacket()
 {
     return incoming.PopNextReadyPacket();
+}
+
+void GioNet::Connection::SetIncomingSequenceNumber(Packet::IdType sequenceNumber)
+{
+    incoming.sequenceNumber = sequenceNumber;
 }
 
 std::string GioNet::Connection::ToString() const
@@ -82,7 +91,39 @@ std::string GioNet::Connection::ToString() const
     return address.ToString();
 }
 
+void GioNet::Connection::SetOutgoingSequenceNumber(Packet::IdType sequenceNumber)
+{
+    outgoing.sequenceNumber = sequenceNumber;
+}
+
 GioNet::Packet::IdType GioNet::Connection::GetIndexForNextPacket()
 {
+    if(outgoing.sequenceNumber == Packet::MaxPossibleId)
+    {
+        // Skip invalid id (0)
+        outgoing.sequenceNumber++;
+    }
+    
     return ++outgoing.sequenceNumber;
+}
+
+void GioNet::Connection::EnqueueProcessablePackets()
+{
+    auto nextExpectedPacketId = incoming.sequenceNumber;
+
+    while(true)
+    {
+        nextExpectedPacketId++;
+
+        if(nextExpectedPacketId == Packet::InvalidId)
+            ++nextExpectedPacketId;
+
+        auto nextPacket = incoming.reliablePackets.find(nextExpectedPacketId);
+
+        if(nextPacket == incoming.reliablePackets.end())
+            break;
+
+        incoming.sequenceNumber = nextExpectedPacketId;
+        incoming.readyPackets.push(nextPacket->second);
+    }
 }

@@ -104,7 +104,7 @@ void GioNet::Client::ListenThread()
 
 void GioNet::Client::ProcessIncomingPacket()
 {
-    while (std::optional<Packet> incomingPacket = connectionToServer->GetReadyIncomingPacket())
+    while (std::optional<Packet> incomingPacket = connectionToServer->PopReadyIncomingPacket())
     {
         InvokeDataReceived(std::move(incomingPacket->payload));
     }
@@ -115,7 +115,7 @@ void GioNet::Client::SendThread()
     std::shared_ptr socketCopy{socket};
     while (socketCopy && socketCopy->IsValid() && !listenThread.get_stop_token().stop_requested())
     {
-        while (std::optional<Packet> outgoingPacket = connectionToServer->GetReadyOutgoingPacket())
+        while (std::optional<Packet> outgoingPacket = connectionToServer->PopReadyOutgoingPacket())
         {
             Buffer b{};
             b.Write(outgoingPacket.value());

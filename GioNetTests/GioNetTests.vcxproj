@@ -61,6 +61,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ReliabilityTests.cpp" />
     <ClCompile Include="src\BufferSerializationTests.cpp" />
     <ClCompile Include="src\BufferTests.cpp" />
     <ClCompile Include="src\PacketTests.cpp" />

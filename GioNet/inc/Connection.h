@@ -48,11 +48,17 @@ namespace GioNet
         
         void Schedule(Packet&& packet);
 
-        std::optional<Packet> GetReadyOutgoingPacket();
+        std::optional<Packet> PopReadyOutgoingPacket();
 
+        void SetOutgoingSequenceNumber(Packet::IdType sequenceNumber);
+        
         void Received(Packet&& packet);
 
-        std::optional<Packet> GetReadyIncomingPacket();
+        std::optional<Packet> PopReadyIncomingPacket();
+
+        void SetIncomingSequenceNumber(Packet::IdType sequenceNumber);
+        
+        Packet::IdType GetLastProcessedIncomingPacketId() const { return incoming.sequenceNumber; }
 
         std::string ToString() const;
 
@@ -60,5 +66,7 @@ namespace GioNet
 
     private:
         Packet::IdType GetIndexForNextPacket();
+        
+        void EnqueueProcessablePackets();
     };
 }
