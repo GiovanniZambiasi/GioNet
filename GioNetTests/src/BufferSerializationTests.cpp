@@ -74,6 +74,8 @@ TEST(BufferSerializationTests, packet)
         GioNet::Packet::Flags::Reliable,
     };
     packet.id = 0;
+    packet.ackId = 0;
+    packet.ackBitset = 0;
     test.ConstructBufferAndTest(packet);
 
     packet = GioNet::Packet{
@@ -81,6 +83,9 @@ TEST(BufferSerializationTests, packet)
         GioNet::Packet::Flags::None,
         {"Payload!"}
     };
+    packet.id = 2;
+    packet.ackId = 10;
+    packet.ackBitset = 0b0110010;
     test.ConstructBufferAndTest(packet);
 
     packet = GioNet::Packet{
@@ -88,7 +93,9 @@ TEST(BufferSerializationTests, packet)
         GioNet::Packet::Flags::Reliable,
         {"Other payload!"}
     };
-    packet.id = ~0;
+    packet.id = GioNet::Packet::MaxPossibleId;
+    packet.ackId = GioNet::Packet::MaxPossibleId;
+    packet.ackBitset = ~0;
     test.ConstructBufferAndTest(packet);
 }
 

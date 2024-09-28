@@ -13,7 +13,7 @@ namespace GioNet
 
     /**
      * Represents a stream of packets, either outgoing or incoming.
-     * <br>
+     * .
      * This is a helper type to encapsulate common information needed by the reliability layer
      */
     struct PacketStream
@@ -22,7 +22,7 @@ namespace GioNet
 
         std::queue<Packet> readyPackets{};
         
-        std::shared_mutex lock{};
+        mutable std::shared_mutex lock{};
 
         Packet::IdType sequenceNumber{Packet::InvalidId};
 
@@ -31,7 +31,7 @@ namespace GioNet
 
     // Enqueues all received packets. If unreliable, processes them right away. If not, buffers them until the proper
     // sequence of packets is received.
-    // ..
+    // .
     // Whenever a packet is sent, puts it into a chronological queue to be sent to the server
     class Connection
     {
@@ -40,6 +40,8 @@ namespace GioNet
         PacketStream outgoing{};
 
         PacketStream incoming{};
+
+        std::atomic<Packet::IdType> currentAckId{Packet::InvalidId};
 
     public:
         Connection(const NetAddress& address);
@@ -51,7 +53,7 @@ namespace GioNet
         std::optional<Packet> PopReadyOutgoingPacket();
 
         void SetOutgoingSequenceNumber(Packet::IdType sequenceNumber);
-        
+
         void Received(Packet&& packet);
 
         std::optional<Packet> PopReadyIncomingPacket();
@@ -63,10 +65,24 @@ namespace GioNet
         std::string ToString() const;
 
         const NetAddress& GetAddress() const { return address; }
-
-    private:
-        Packet::IdType GetIndexForNextPacket();
         
+        /**
+         * Returns the id of the latest packet received.
+         * .
+         * Note that packet ids can overflow, so the latest id may eventually wrap back to a smaller number (such as
+         * going from 'Packet::MaxPosssibleId' back to 1)
+         */
+        Packet::IdType GetCurrentAckId() const { return currentAckId.load(); }
+
+        bool HasReceivedPacket(Packet::IdType id) const; 
+
+        void AddAckHeader(Packet& packet);
+        
+    private:
+        void UpdateAckId(Packet::IdType newId);
+        
+        Packet::IdType GetIndexForNextPacket();
+
         void EnqueueProcessablePackets();
     };
 }

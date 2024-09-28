@@ -1,4 +1,6 @@
-﻿#include "gtest/gtest.h"
+﻿#include <bitset>
+
+#include "gtest/gtest.h"
 #include "GioNet.h"
 
 TEST(ReliabilityTests, outgoing_sequencing)
@@ -106,4 +108,114 @@ TEST(ReliabilityTests, incoming_sequencing_overflow)
     
     processedPacket = connection.PopReadyIncomingPacket();
     ASSERT_TRUE(processedPacket && processedPacket->id == 1);
+}
+
+TEST(ReliabilityTests, incoming_ack)
+{
+    GioNet::Connection connection{};
+    GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable};
+    packet.id = 1;
+    connection.Received(GioNet::Packet{packet});
+    ASSERT_EQ(connection.GetCurrentAckId(), 1);
+    
+    packet.id = 4;
+    connection.Received(GioNet::Packet{packet});
+    ASSERT_EQ(connection.GetCurrentAckId(), 4);
+
+    packet.id = 2;
+    connection.Received(GioNet::Packet{packet});
+    ASSERT_EQ(connection.GetCurrentAckId(), 4);
+}
+
+TEST(ReliabilityTests, incoming_ack_overflow)
+{
+    GioNet::Connection connection{};
+    GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable};
+    packet.id = GioNet::Packet::MaxPossibleId;
+    connection.Received(GioNet::Packet{packet});
+    ASSERT_EQ(connection.GetCurrentAckId(), GioNet::Packet::MaxPossibleId);
+
+    packet.id = 1;
+    connection.Received(GioNet::Packet{packet});
+    ASSERT_EQ(connection.GetCurrentAckId(), 1);
+}
+
+class AckBitsetTest
+{
+public:
+    void Test(const std::initializer_list<GioNet::Packet::IdType>& ids, GioNet::Packet::IdType expectedAck, GioNet::Packet::AckBitsetType expectedBitset)
+    {
+        GioNet::Connection connection{};
+        ReceivePackets(connection, ids);
+
+        CreateAckHeaderAndCompare(connection, expectedAck, expectedBitset);
+    }
+
+    void ReceivePackets(GioNet::Connection& connection, const std::initializer_list<GioNet::Packet::IdType>& ids)
+    {
+        GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable};
+
+        for (GioNet::Packet::IdType id : ids)
+        {
+            packet.id = id;
+            connection.Received(GioNet::Packet{packet});
+        }
+    }
+
+    void CreateAckHeaderAndCompare(GioNet::Connection& connection, GioNet::Packet::IdType expectedAck, GioNet::Packet::AckBitsetType expectedBitset)
+    {
+        GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable};
+        connection.AddAckHeader(packet);
+        
+        ASSERT_EQ(packet.ackId, expectedAck);
+        static constexpr size_t AckBitsetSize = sizeof(GioNet::Packet::AckBitsetType);
+        ASSERT_EQ(packet.ackBitset, expectedBitset) << "Expected ack header: " <<
+            std::bitset<AckBitsetSize>{expectedBitset} << ", got ack header: " <<
+                std::bitset<AckBitsetSize>{packet.ackBitset};
+    }
+};
+
+TEST(ReliabilityTests, ack_bitset)
+{
+    AckBitsetTest bitsetTest{};
+    bitsetTest.Test({ 1, 2, 3, 4, 5 }, 5, 0b1111);
+    bitsetTest.Test({ 1, 2, 5 }, 5, 0b1100);
+    bitsetTest.Test({ GioNet::Packet::MaxPossibleId, 1, 2 }, 2, 0b101);
+    bitsetTest.Test({ GioNet::Packet::MaxPossibleId - 1, GioNet::Packet::MaxPossibleId, 1 }, 1, 0b110);
+}
+
+TEST(ReliabilityTests, ack_overflow_stress)
+{
+    GioNet::Connection client{};
+    GioNet::Connection server{};
+
+    static constexpr size_t Iterations = GioNet::Packet::MaxPossibleId + 1;
+
+    for (size_t i = 0; i < Iterations; ++i)
+    {
+        if(i == 65535)
+        {
+            int s{};
+        }
+            
+        {
+            GioNet::Buffer payload{};
+            payload.Write(i);
+            GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable, std::move(payload)};
+            server.Schedule(std::move(packet));
+        }
+
+        std::optional<GioNet::Packet> outgoingPacket = server.PopReadyOutgoingPacket();
+        ASSERT_TRUE(outgoingPacket);
+        GioNet::Packet::IdType expectedId = outgoingPacket->id;
+
+        {
+            client.Received(std::move(*outgoingPacket));
+            auto incomingPacket = client.PopReadyIncomingPacket();
+            ASSERT_TRUE(incomingPacket);
+            ASSERT_EQ(incomingPacket->id, expectedId);
+            size_t payload = incomingPacket->payload.Read<size_t>();
+            ASSERT_EQ(payload, i);
+        }
+    }
 }

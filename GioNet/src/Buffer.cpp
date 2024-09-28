@@ -115,8 +115,9 @@ template<>
 void GioNet::Buffer::Write(const Packet& val)
 {
     Write<Packet::HeaderType>(val.header);
-    Write<Packet::AckHeaderType>(val.ackBitset);
     Write<Packet::IdType>(val.id);
+    Write<Packet::IdType>(val.ackId);
+    Write<Packet::AckBitsetType>(val.ackBitset);
     Write(val.payload);
 }
 
@@ -125,8 +126,9 @@ GioNet::Packet GioNet::Buffer::Read()
 {
     Packet packet{};
     packet.header = Read<Packet::HeaderType>();
-    packet.ackBitset = Read<Packet::AckHeaderType>();
     packet.id = Read<Packet::IdType>();
+    packet.ackId = Read<Packet::IdType>();
+    packet.ackBitset = Read<Packet::AckBitsetType>();
     packet.payload = Read<Buffer>();
     return packet;
 }

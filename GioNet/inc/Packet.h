@@ -10,7 +10,7 @@ namespace GioNet
     {
         using HeaderType = uint8_t;
         using IdType = uint16_t;
-        using AckHeaderType = uint32_t;
+        using AckBitsetType = uint32_t;
 
         constexpr static IdType InvalidId = 0;
         constexpr static IdType MaxPossibleId = ~0;
@@ -34,7 +34,7 @@ namespace GioNet
 
         IdType ackId{InvalidId};
         
-        AckHeaderType ackBitset{0};
+        AckBitsetType ackBitset{0};
         
         Buffer payload{};
 

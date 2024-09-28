@@ -23,19 +23,11 @@ GioNet::Connection::Connection(const NetAddress& address)
 
 void GioNet::Connection::Schedule(Packet&& packet)
 {
-    std::scoped_lock _{outgoing.lock};
+    std::unique_lock _{outgoing.lock};
     
     if(packet.HasFlags(Packet::Flags::Reliable))
     {
         Packet::IdType index = GetIndexForNextPacket();
-        
-        if(outgoing.reliablePackets.contains(index))
-        {
-            // TODO - Put packets in an aux queue until indices are available again? 
-            GIONET_LOG("[ERROR]: Packet already exists with id %i", index);
-            return;
-        }
-        
         packet.id = index;
         outgoing.reliablePackets[index] = packet;
     }
@@ -49,7 +41,7 @@ std::optional<GioNet::Packet> GioNet::Connection::PopReadyOutgoingPacket()
 
     if(packet)
     {
-        // TODO - Add ack header
+        AddAckHeader(*packet);
     }
         
     return packet;
@@ -57,16 +49,15 @@ std::optional<GioNet::Packet> GioNet::Connection::PopReadyOutgoingPacket()
 
 void GioNet::Connection::Received(Packet&& packet)
 {
-    std::scoped_lock _{incoming.lock};
+    std::unique_lock _{incoming.lock};
     
     // TODO - Check incoming acks, remove unnecessary outgoing packets
     
     if(packet.HasFlags(Packet::Flags::Reliable))
     {
-        if(incoming.reliablePackets.contains(packet.id))
-            return;
-
+        assert(packet.id != Packet::InvalidId);
         auto packetId = packet.id;
+        UpdateAckId(packetId);
         incoming.reliablePackets[packetId] = std::move(packet);
         EnqueueProcessablePackets();
     }
@@ -91,6 +82,12 @@ std::string GioNet::Connection::ToString() const
     return address.ToString();
 }
 
+bool GioNet::Connection::HasReceivedPacket(Packet::IdType id) const
+{
+    std::shared_lock _{incoming.lock};
+    return incoming.reliablePackets.contains(id);
+}
+
 void GioNet::Connection::SetOutgoingSequenceNumber(Packet::IdType sequenceNumber)
 {
     outgoing.sequenceNumber = sequenceNumber;
@@ -107,11 +104,69 @@ GioNet::Packet::IdType GioNet::Connection::GetIndexForNextPacket()
     return ++outgoing.sequenceNumber;
 }
 
+void GioNet::Connection::AddAckHeader(Packet& packet)
+{
+    static constexpr size_t ackCount = sizeof(Packet::ackBitset);
+    
+    packet.ackId = GetCurrentAckId();
+    packet.ackBitset = 0;
+
+    for (Packet::AckBitsetType i = 0; i < static_cast<Packet::AckBitsetType>(ackCount); ++i)
+    {
+        Packet::IdType offset = static_cast<Packet::IdType>(i) + 1;
+        Packet::IdType id = packet.ackId - offset;
+
+        if(HasReceivedPacket(id))
+        {
+            packet.ackBitset |= 1 << i;
+        }
+    }
+}
+
+/*
+ * Because packet ids can overflow, simply checking if the new id is greater won't work. This method also takes into
+ * account the numerical distance between the previous ack id, and the new packet id. If their distance is too great,
+ * we consider the smaller "new id" to actually be the latest packet received. 
+*/
+void GioNet::Connection::UpdateAckId(Packet::IdType newId)
+{
+    static constexpr Packet::IdType HalfId = Packet::MaxPossibleId / 2;
+
+    Packet::IdType currentId = currentAckId.load();
+
+    if(currentId == Packet::InvalidId)
+    {
+        currentAckId.store(newId);
+        return;
+    }
+
+    Packet::IdType distance;
+    bool newIdIsGreater;
+
+    if(currentId > newId)
+    {
+        distance = currentId - newId;
+        newIdIsGreater = false;
+    }
+    else
+    {
+        distance = newId - currentId;
+        newIdIsGreater = true;
+    }
+    
+    if((distance < HalfId && newIdIsGreater) ||
+        (distance > HalfId && !newIdIsGreater))
+    {
+        currentAckId.store(newId);
+    }
+}
+
 void GioNet::Connection::EnqueueProcessablePackets()
 {
+    Packet::IdType latestReceivedPacketId = GetCurrentAckId();
     auto nextExpectedPacketId = incoming.sequenceNumber;
 
-    while(true)
+    while(nextExpectedPacketId != latestReceivedPacketId)
     {
         nextExpectedPacketId++;
 
