@@ -52,6 +52,7 @@ void GioNet::Connection::Received(Packet&& packet)
     std::unique_lock _{incoming.lock};
     
     // TODO - Check incoming acks, remove unnecessary outgoing packets
+    ProcessAcks(packet);
     
     if(packet.HasFlags(Packet::Flags::Reliable))
     {
@@ -180,5 +181,47 @@ void GioNet::Connection::EnqueueProcessablePackets()
 
         incoming.sequenceNumber = nextExpectedPacketId;
         incoming.readyPackets.push(nextPacket->second);
+    }
+}
+
+void GioNet::Connection::ProcessAcks(const Packet& packet)
+{
+    static constexpr size_t iterations = sizeof(Packet::ackBitset);
+    
+    Packet::IdType id{packet.ackId};
+    PacketAcked(id);
+
+    for (size_t i = 0; i < iterations; ++i)
+    {
+        --id;
+        bool isPacketAcked = (packet.ackBitset & 1 << i) != 0;
+
+        if(isPacketAcked)
+        {
+            PacketAcked(id);
+        }
+        else
+        {
+            ReschedulePacket(id);
+        }
+    }
+    
+}
+
+void GioNet::Connection::PacketAcked(Packet::IdType id)
+{
+    std::unique_lock _{outgoing.lock};
+    outgoing.reliablePackets.erase(id);
+}
+
+void GioNet::Connection::ReschedulePacket(Packet::IdType id)
+{
+    std::unique_lock _{outgoing.lock};
+
+    auto packet = outgoing.reliablePackets.find(id);
+    
+    if(packet != outgoing.reliablePackets.end())
+    {
+        outgoing.readyPackets.emplace(packet->second);
     }
 }

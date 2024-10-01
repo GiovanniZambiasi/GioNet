@@ -186,8 +186,8 @@ TEST(ReliabilityTests, ack_bitset)
 
 TEST(ReliabilityTests, ack_overflow_stress)
 {
-    GioNet::Connection client{};
-    GioNet::Connection server{};
+    GioNet::Connection sender{};
+    GioNet::Connection receiver{};
 
     static constexpr size_t Iterations = GioNet::Packet::MaxPossibleId + 1;
 
@@ -202,20 +202,64 @@ TEST(ReliabilityTests, ack_overflow_stress)
             GioNet::Buffer payload{};
             payload.Write(i);
             GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable, std::move(payload)};
-            server.Schedule(std::move(packet));
+            sender.Schedule(std::move(packet));
         }
 
-        std::optional<GioNet::Packet> outgoingPacket = server.PopReadyOutgoingPacket();
+        std::optional<GioNet::Packet> outgoingPacket = sender.PopReadyOutgoingPacket();
         ASSERT_TRUE(outgoingPacket);
         GioNet::Packet::IdType expectedId = outgoingPacket->id;
 
         {
-            client.Received(std::move(*outgoingPacket));
-            auto incomingPacket = client.PopReadyIncomingPacket();
+            receiver.Received(std::move(*outgoingPacket));
+            auto incomingPacket = receiver.PopReadyIncomingPacket();
             ASSERT_TRUE(incomingPacket);
             ASSERT_EQ(incomingPacket->id, expectedId);
             size_t payload = incomingPacket->payload.Read<size_t>();
             ASSERT_EQ(payload, i);
         }
+    }
+}
+
+TEST(ReliabilityTests, non_acked_packets_resent)
+{
+    std::set<GioNet::Packet::IdType> missingPackets = {2, 4};
+    GioNet::Connection sender{};
+    GioNet::Connection receiver{};
+ 
+    for (int i = 0; i < 5; ++i)
+    {
+        GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable};
+        sender.Schedule(std::move(packet));
+        std::optional<GioNet::Packet> sent = sender.PopReadyOutgoingPacket();
+        ASSERT_TRUE(sent);
+
+        if(!missingPackets.contains(sent->id))
+        {
+            receiver.Received(std::move(*sent));
+        }
+    }
+
+    std::optional<GioNet::Packet> packetWithAcks{};
+    {
+        GioNet::Packet packet{GioNet::Packet::Types::Data, GioNet::Packet::Flags::Reliable};
+        receiver.Schedule(std::move(packet));
+
+        packetWithAcks = receiver.PopReadyOutgoingPacket();
+    }
+    ASSERT_TRUE(packetWithAcks);
+
+    {
+        sender.Received(std::move(*packetWithAcks));
+        packetWithAcks.reset();
+
+        while(std::optional<GioNet::Packet> outgoingPacket = sender.PopReadyOutgoingPacket())
+        {
+            if(missingPackets.contains(outgoingPacket->id))
+            {
+                missingPackets.erase(outgoingPacket->id);
+            }
+        }
+
+        ASSERT_TRUE(missingPackets.empty()) << "Expected all missing packets to be rescheduled";
     }
 }

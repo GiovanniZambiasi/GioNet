@@ -84,5 +84,11 @@ namespace GioNet
         Packet::IdType GetIndexForNextPacket();
 
         void EnqueueProcessablePackets();
+
+        void ProcessAcks(const Packet& packet);
+
+        void PacketAcked(Packet::IdType id);
+        
+        void ReschedulePacket(Packet::IdType id);
     };
 }
