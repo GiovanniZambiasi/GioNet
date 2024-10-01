@@ -41,8 +41,8 @@ This redundancy is what provides reliability with a certain degree of safety.
     - [X] Abstract socket from connections class (only host classes should handle sockets to facilitate adding congestion control later)
     - [X] Maybe replace Peer struct with Connection class?
     - [X] ack bitset should piggy back off of every packet
-    - [ ] If an ack has not been received and the bitset has moved beyond it, hosts should be able to send an ack request
-    - [ ] Discard old unnecessary packets
+    - [X] Discard acked packets
+    - [ ] Discard old sent acked packets
     - [ ] Reschedule missing packets to send to clients after missing acks received
 - [ ] Packet fragmentation
 - [ ] Socket thread safety
